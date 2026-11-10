@@ -1,0 +1,46 @@
+# Точки, для которых загружается погода Open-Meteo (шаг 2.1).
+#
+# Пометки status, как в network.yaml:
+#   источник  — значение взято из документа/базы, ссылка в поле source;
+#   допущение — значение выбрано для прототипа, в поле basis — на чём основано.
+#
+# Координаты — центр населённого пункта по GeoNames (эту базу использует геокодер Open-Meteo).
+# Open-Meteo сам выбирает ближайшую ячейку своей сетки; её координаты сохраняются в CSV
+# (колонки grid_lat, grid_lon, grid_elevation) — для ERA5 это ячейка ~25 км.
+
+timezone: Asia/Aqtau   # UTC+5, по ответу Open-Meteo для всех трёх точек
+
+points:
+  - id: aktau
+    name: Актау
+    lat: 43.66105
+    lon: 51.17392
+    elevation_m: 16
+    status: источник
+    source: https://www.geonames.org/610612
+  - id: zhanaozen
+    name: Жанаозен
+    lat: 43.34116
+    lon: 52.86192
+    elevation_m: 204
+    status: источник
+    source: https://www.geonames.org/607610
+  - id: beyneu
+    name: Бейнеу
+    lat: 45.31667
+    lon: 55.2
+    elevation_m: 6
+    status: источник
+    source: https://www.geonames.org/610298
+
+# Какой точкой описывается погода у каждого узла сети (id из network.yaml).
+# Расстояния — по прямой (формула гаверсинусов) между координатами GeoNames.
+bus_point:
+  - {bus: 1, point: aktau,     status: допущение, basis: МАЭК находится в Актау}
+  - {bus: 2, point: aktau,     status: допущение, basis: подстанция в Актау}
+  - {bus: 3, point: aktau,     status: допущение, basis: промзона Актау}
+  - {bus: 4, point: aktau,     status: допущение, basis: "Форт-Шевченко в 119 км к северо-западу от Актау (GeoNames 609906), своей точки нет; погода на берегу п-ова Мангышлак может заметно отличаться"}
+  - {bus: 5, point: zhanaozen, status: допущение, basis: "Жетыбай (GeoNames 607551): 67 км до Жанаозена и 75 км до Актау — выбор между ними почти произвольный"}
+  - {bus: 6, point: zhanaozen, status: допущение, basis: подстанция в Жанаозене}
+  - {bus: 7, point: aktau,     status: допущение, basis: "Шетпе (GeoNames 608324): 95 км до Актау, 105 км до Жанаозена, своей точки нет; погода может заметно отличаться"}
+  - {bus: 8, point: beyneu,    status: допущение, basis: подстанция в Бейнеу}
