@@ -27,8 +27,11 @@
 ## Структура
 
 ```
+data/           параметры сети (network.yaml), у каждого значения пометка «источник» или «допущение»
+twin/           Python-ядро: network.py — загрузка данных, powerflow.py — расчёт режима, pp_model.py — модель в pandapower
+tests/          автотесты pytest
 core_js/        расчётное ядро (JavaScript): engine2.js — режим сети и оптимизация, day.js — сутки вперёд
-validation/     независимая проверка ядра (Node.js + Python/numpy/scipy)
+validation/     независимая проверка ядра (Node.js + Python/numpy/scipy) и сверка с pandapower
 web_prototype/  веб-прототип интерфейса (один HTML-файл, открывается в браузере)
 docs/           аудит, план работ, журнал решений
 ```
@@ -37,12 +40,23 @@ docs/           аудит, план работ, журнал решений
 
 **Веб-прототип:** открыть `web_prototype/index.html` в браузере.
 
-**Проверка ядра** (нужны Node.js и Python 3 с numpy и scipy), из корня репозитория:
+**Все проверки одной командой** (Windows: `py` вместо `python`), из корня репозитория:
+
+```
+python -m pip install -r requirements.txt
+python -m pytest
+```
+
+Тест сверки с pandapower запускается, только если pandapower установлен; без Node.js тесты,
+которым нужны результаты JS-ядра, пропускаются.
+
+**Проверка ядра по отдельности** (нужны Node.js и Python 3 с numpy и scipy):
 
 ```
 node validation/export.js
 python validation/check.py
 python validation/check_pv.py
+python validation/compare_pandapower.py   # нужен pandapower
 ```
 
 Результаты на 09.11.2026:
