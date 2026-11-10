@@ -1,0 +1,2268 @@
+# Модель сети 110 кВ Мангистауской области по ОТКРЫТЫМ ИСТОЧНИКАМ (шаг 2.2) — собрана скриптом twin/build_real.py.
+# Не редактировать вручную: пересобрать командой  .venv\Scripts\python -m twin.build_real
+#
+# Лицензия данных OpenStreetMap: трассы, длины, цепи и положение ПС взяты из OpenStreetMap.
+#   © участники OpenStreetMap. Данные доступны по лицензии Open Database License (ODbL) 1.0:
+#   https://opendatacommons.org/licenses/odbl/1-0/ ; авторство: https://www.openstreetmap.org/copyright
+#   Снимок: power_2026-11-10.json (метка времени базы OSM: 2026-11-10T16:07:01Z). Этот файл — производная база данных
+#   и распространяется на тех же условиях ODbL 1.0.
+#
+# Пометки: status у элемента — «источник» только если ВСЕ его поля из источников, иначе «допущение».
+#   Подробно по полям — в marks: {поле: {status, source | basis}}. Доли источников — в разделе summary.
+# В расчёт входят только линии с тегом voltage=110000 (решение пользователя, вариант A).
+#   Линии без тега напряжения — в разделе not_modelled, 220 кВ — в inventory_220kv (в расчёте не участвуют).
+# Питание от ПС 220/110 кВ — эквивалентные источники (допущение): сеть 220 кВ и АТ не моделируются (шаг 2.4).
+
+meta:
+  base_mva: 100
+  base_kv: 110
+  frequency_hz: 50
+  built: '2026-11-10'
+  builder: twin/build_real.py
+  osm_snapshot: power_2026-11-10.json
+  osm_base_timestamp: '2026-11-10T16:07:01Z'
+  license: ODbL 1.0 (© участники OpenStreetMap)
+  scope: только линии с тегом voltage=110000 (вариант A)
+conductors:
+  АС-240:
+    r_ohm_km: 0.118
+    x_ohm_km: 0.405
+    b_s_km: 2.81e-06
+    i_rated_a: 610
+    diameter_m: 0.0216
+    status: допущение
+    basis: типовые значения для провода АС-240/32 на линии 110 кВ; требуют сверки со справочником (ГОСТ 839)
+  АС-185:
+    r_ohm_km: 0.159
+    x_ohm_km: 0.413
+    b_s_km: 2.75e-06
+    i_rated_a: 510
+    diameter_m: 0.0188
+    status: допущение
+    basis: типовые значения для провода АС-185/29; требуют сверки со справочником
+  АС-120:
+    r_ohm_km: 0.244
+    x_ohm_km: 0.427
+    b_s_km: 2.66e-06
+    i_rated_a: 390
+    diameter_m: 0.0152
+    status: допущение
+    basis: типовые значения для провода АС-120/19; требуют сверки со справочником
+buses:
+- id: 1
+  name: обрыв линии (узел OSM 12544358858)
+  short: обрыв линии
+  share: 0.0
+  osm: node/12544358858
+  kind: обрыв линии
+  status: допущение
+  basis: конец линии 110 кВ в OSM не доходит до ПС (ПС не нанесена или вне порога привязки 0,5 км)
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/12544358858
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 2
+  name: обрыв линии (узел OSM 12754674597)
+  short: обрыв линии
+  share: 0.0
+  osm: node/12754674597
+  kind: обрыв линии
+  status: допущение
+  basis: конец линии 110 кВ в OSM не доходит до ПС (ПС не нанесена или вне порога привязки 0,5 км)
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/12754674597
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 3
+  name: ответвление (узел OSM 12819462480)
+  short: ответвление
+  share: 0.0
+  osm: node/12819462480
+  kind: ответвление
+  status: допущение
+  basis: точка ответвления линии в OSM, ПС нет
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/12819462480
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 4
+  name: ответвление (узел OSM 12819462564)
+  short: ответвление
+  share: 0.0
+  osm: node/12819462564
+  kind: ответвление
+  status: допущение
+  basis: точка ответвления линии в OSM, ПС нет
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/12819462564
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 5
+  name: ответвление (узел OSM 12819462566)
+  short: ответвление
+  share: 0.0
+  osm: node/12819462566
+  kind: ответвление
+  status: допущение
+  basis: точка ответвления линии в OSM, ПС нет
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/12819462566
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 6
+  name: ответвление (узел OSM 12819462572)
+  short: ответвление
+  share: 0.0
+  osm: node/12819462572
+  kind: ответвление
+  status: допущение
+  basis: точка ответвления линии в OSM, ПС нет
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/12819462572
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 7
+  name: ответвление (узел OSM 12819462574)
+  short: ответвление
+  share: 0.0
+  osm: node/12819462574
+  kind: ответвление
+  status: допущение
+  basis: точка ответвления линии в OSM, ПС нет
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/12819462574
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 8
+  name: ответвление (узел OSM 12819462594)
+  short: ответвление
+  share: 0.0
+  osm: node/12819462594
+  kind: ответвление
+  status: допущение
+  basis: точка ответвления линии в OSM, ПС нет
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/12819462594
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 9
+  name: ответвление (узел OSM 12839682598)
+  short: ответвление
+  share: 0.0
+  osm: node/12839682598
+  kind: ответвление
+  status: допущение
+  basis: точка ответвления линии в OSM, ПС нет
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/12839682598
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 10
+  name: ответвление (узел OSM 2992343639)
+  short: ответвление
+  share: 0.0
+  osm: node/2992343639
+  kind: ответвление
+  status: допущение
+  basis: точка ответвления линии в OSM, ПС нет
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/2992343639
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 11
+  name: обрыв линии (узел OSM 2992343852)
+  short: обрыв линии
+  share: 0.0
+  osm: node/2992343852
+  kind: обрыв линии
+  status: допущение
+  basis: конец линии 110 кВ в OSM не доходит до ПС (ПС не нанесена или вне порога привязки 0,5 км)
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/2992343852
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 12
+  name: ответвление (узел OSM 3084489543)
+  short: ответвление
+  share: 0.0
+  osm: node/3084489543
+  kind: ответвление
+  status: допущение
+  basis: точка ответвления линии в OSM, ПС нет
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/3084489543
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 13
+  name: ответвление (узел OSM 3084489545)
+  short: ответвление
+  share: 0.0
+  osm: node/3084489545
+  kind: ответвление
+  status: допущение
+  basis: точка ответвления линии в OSM, ПС нет
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/3084489545
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 14
+  name: ответвление (узел OSM 3084497283)
+  short: ответвление
+  share: 0.0
+  osm: node/3084497283
+  kind: ответвление
+  status: допущение
+  basis: точка ответвления линии в OSM, ПС нет
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/3084497283
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 15
+  name: ответвление (узел OSM 3084497285)
+  short: ответвление
+  share: 0.0
+  osm: node/3084497285
+  kind: ответвление
+  status: допущение
+  basis: точка ответвления линии в OSM, ПС нет
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/3084497285
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 16
+  name: ответвление (узел OSM 3204365480)
+  short: ответвление
+  share: 0.0
+  osm: node/3204365480
+  kind: ответвление
+  status: допущение
+  basis: точка ответвления линии в OSM, ПС нет
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/3204365480
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 17
+  name: ответвление (узел OSM 3204382659)
+  short: ответвление
+  share: 0.0
+  osm: node/3204382659
+  kind: ответвление
+  status: допущение
+  basis: точка ответвления линии в OSM, ПС нет
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/3204382659
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 18
+  name: ответвление (узел OSM 3204382660)
+  short: ответвление
+  share: 0.0
+  osm: node/3204382660
+  kind: ответвление
+  status: допущение
+  basis: точка ответвления линии в OSM, ПС нет
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/3204382660
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 19
+  name: ответвление (узел OSM 3204383176)
+  short: ответвление
+  share: 0.0
+  osm: node/3204383176
+  kind: ответвление
+  status: допущение
+  basis: точка ответвления линии в OSM, ПС нет
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/3204383176
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 20
+  name: ответвление (узел OSM 3204383179)
+  short: ответвление
+  share: 0.0
+  osm: node/3204383179
+  kind: ответвление
+  status: допущение
+  basis: точка ответвления линии в OSM, ПС нет
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/3204383179
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 21
+  name: обрыв линии (узел OSM 3204383197)
+  short: обрыв линии
+  share: 0.0
+  osm: node/3204383197
+  kind: обрыв линии
+  status: допущение
+  basis: конец линии 110 кВ в OSM не доходит до ПС (ПС не нанесена или вне порога привязки 0,5 км)
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/3204383197
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 22
+  name: обрыв линии (узел OSM 3796663314)
+  short: обрыв линии
+  share: 0.0
+  osm: node/3796663314
+  kind: обрыв линии
+  status: допущение
+  basis: конец линии 110 кВ в OSM не доходит до ПС (ПС не нанесена или вне порога привязки 0,5 км)
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/3796663314
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 23
+  name: ответвление (узел OSM 4035225938)
+  short: ответвление
+  share: 0.0
+  osm: node/4035225938
+  kind: ответвление
+  status: допущение
+  basis: точка ответвления линии в OSM, ПС нет
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/node/4035225938
+    share:
+      status: допущение
+      basis: нагрузка в узле без ПС не задаётся (0)
+- id: 24
+  name: ПС у «Турыш» (название не установлено)
+  short: ПС у «Турыш» (назв
+  share: 0.125
+  osm: way/1377485826
+  lat: 45.45551
+  lon: 56.10483
+  kind: ПС
+  status: допущение
+  basis: положение — OSM (источник); доля нагрузки — допущение
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/way/1377485826
+    name:
+      status: допущение
+      confidence: низкая
+      basis: 'только близость: 0.87 км до посёлка «Турыш» по OSM'
+    share:
+      status: допущение
+      basis: поровну между 8 ПС модели; реальная нагрузка — шаг 2.3
+- id: 25
+  name: ПС 220 кВ «Бейнеу»
+  short: ПС 220 кВ «Бейнеу»
+  share: 0.0
+  osm: way/181270259
+  lat: 45.34851
+  lon: 55.16418
+  kind: ПС 220/110 (питание)
+  status: допущение
+  basis: положение — OSM (источник); доля нагрузки — допущение
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/way/181270259
+    name:
+      status: источник
+      source: https://www.lada.kz/aktau_news/society/157917-kegoc-zavershil-planovye-remonty-na-svoikh-obektakh-v-mangistauskoi-oblasti.html (текст
+        статьи); https://www.mrek.kz/assets/app/img/doc/zakupki/%D0%9F%D0%B5%D1%80%D0%B5%D1%87%D0%B5%D0%BD%D1%8C%20%D0%A2%D0%A0%D0%A3%20%D0%BD%D0%B0%202021%20%D0%B3%D0%BE%D0%B4%20%D0%90%D0%9E%20%D0%9C%D0%A0%D0%AD%D0%9A%20%D1%81%20%D0%B8%D0%B7%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F%D0%BC%D0%B8%20%D0%BF%D0%BE%20%D1%81%D0%BE%D1%81%D1%82%D0%BE%D1%8F%D0%BD%D0%B8%D1%8E%20%D0%BD%D0%B0%2031.12.2021%20%D0%B3%D0%BE%D0%B4%D0%B0.pdf
+        (стр. PDF 84)
+      confidence: средняя
+      basis: единственная ПС OSM с классом 220 кВ, у которой ближайший посёлок — «Бейнеу» (3.47 км); название ПС совпадает с посёлком; в документах
+        — ПС 220 кВ с шинами 110 кВ
+    share:
+      status: допущение
+      basis: 'питающий узел: нагрузка 110 кВ не задаётся'
+- id: 26
+  name: ПС у «Боранкул» (название не установлено)
+  short: ПС у «Боранкул» (н
+  share: 0.125
+  osm: way/230790688
+  lat: 46.20122
+  lon: 54.49158
+  kind: ПС
+  status: допущение
+  basis: положение — OSM (источник); доля нагрузки — допущение
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/way/230790688
+    name:
+      status: допущение
+      confidence: низкая
+      basis: 'только близость: 1.74 км до посёлка «Боранкул» по OSM'
+    share:
+      status: допущение
+      basis: поровну между 8 ПС модели; реальная нагрузка — шаг 2.3
+- id: 27
+  name: ПС у «Сайотес» (название не установлено)
+  short: ПС у «Сайотес» (на
+  share: 0.125
+  osm: way/264092698
+  lat: 44.32868
+  lon: 53.54004
+  kind: ПС
+  status: допущение
+  basis: положение — OSM (источник); доля нагрузки — допущение
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/way/264092698
+    name:
+      status: допущение
+      confidence: низкая
+      basis: 'только близость: 0.56 км до посёлка «Сайотес» по OSM'
+    share:
+      status: допущение
+      basis: поровну между 8 ПС модели; реальная нагрузка — шаг 2.3
+- id: 28
+  name: УРПС 220/110/35/10 кВ «Каражанбас»
+  short: УРПС 220/110/35/10
+  share: 0.0
+  osm: way/279492273
+  lat: 45.08608
+  lon: 51.38764
+  kind: ПС 220/110 (питание)
+  status: допущение
+  basis: положение — OSM (источник); доля нагрузки — допущение
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/way/279492273
+    name:
+      status: источник
+      source: https://kus.kz/upload/iblock/a6e/4cbbt2967m4vtfx2u685vy588r87szgj.pdf (стр. PDF 4, 20)
+      confidence: средняя
+      basis: единственная ПС OSM с классом 220 кВ, у которой ближайший посёлок — «Каражанбас» (14.1 км); название ПС совпадает с посёлком (месторождением)
+    share:
+      status: допущение
+      basis: 'питающий узел: нагрузка 110 кВ не задаётся'
+- id: 29
+  name: ПС way/279504169
+  short: ПС way/279504169
+  share: 0.125
+  osm: way/279504169
+  lat: 45.13203
+  lon: 51.39572
+  kind: ПС
+  status: допущение
+  basis: положение — OSM (источник); доля нагрузки — допущение
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/way/279504169
+    name:
+      status: допущение
+      confidence: не опознана
+      basis: 'оснований нет: ближайший посёлок «Каражанбас» в 10.52 км (> 5.0 км), имени и совпадения с документом нет'
+    share:
+      status: допущение
+      basis: поровну между 8 ПС модели; реальная нагрузка — шаг 2.3
+- id: 30
+  name: ПС way/279678200
+  short: ПС way/279678200
+  share: 0.125
+  osm: way/279678200
+  lat: 44.60459
+  lon: 54.04001
+  kind: ПС
+  status: допущение
+  basis: положение — OSM (источник); доля нагрузки — допущение
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/way/279678200
+    name:
+      status: допущение
+      confidence: не опознана
+      basis: 'оснований нет: ближайший посёлок «Толеп» в 47.75 км (> 5.0 км), имени и совпадения с документом нет'
+    share:
+      status: допущение
+      basis: поровну между 8 ПС модели; реальная нагрузка — шаг 2.3
+- id: 31
+  name: ПС 110/35/6 кВ «Бейнеу»
+  short: ПС 110/35/6 кВ «Бе
+  share: 0.125
+  osm: way/313682877
+  lat: 45.31772
+  lon: 55.20856
+  kind: ПС
+  status: допущение
+  basis: положение — OSM (источник); доля нагрузки — допущение
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/way/313682877
+    name:
+      status: источник
+      source: https://www.mrek.kz/assets/app/img/doc/zakupki/%D0%9F%D0%B5%D1%80%D0%B5%D1%87%D0%B5%D0%BD%D1%8C%20%D0%A2%D0%A0%D0%A3%20%D0%BD%D0%B0%202021%20%D0%B3%D0%BE%D0%B4%20%D0%90%D0%9E%20%D0%9C%D0%A0%D0%AD%D0%9A%20%D1%81%20%D0%B8%D0%B7%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F%D0%BC%D0%B8%20%D0%BF%D0%BE%20%D1%81%D0%BE%D1%81%D1%82%D0%BE%D1%8F%D0%BD%D0%B8%D1%8E%20%D0%BD%D0%B0%2031.12.2021%20%D0%B3%D0%BE%D0%B4%D0%B0.pdf
+        (стр. PDF 44)
+      confidence: средняя
+      basis: единственная ПС OSM с классом 110 кВ, у которой ближайший посёлок — «Бейнеу» (1.79 км); название ПС совпадает с посёлком; классы
+        110 и 35 кВ совпадают с тегом voltage
+    share:
+      status: допущение
+      basis: поровну между 8 ПС модели; реальная нагрузка — шаг 2.3
+- id: 32
+  name: ПС way/314387379
+  short: ПС way/314387379
+  share: 0.125
+  osm: way/314387379
+  lat: 45.10122
+  lon: 51.53351
+  kind: ПС
+  status: допущение
+  basis: положение — OSM (источник); доля нагрузки — допущение
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/way/314387379
+    name:
+      status: допущение
+      confidence: не опознана
+      basis: 'оснований нет: ближайший посёлок «Северное Бузачи» в 17.44 км (> 5.0 км), имени и совпадения с документом нет'
+    share:
+      status: допущение
+      basis: поровну между 8 ПС модели; реальная нагрузка — шаг 2.3
+- id: 33
+  name: ПС way/314389857
+  short: ПС way/314389857
+  share: 0.125
+  osm: way/314389857
+  lat: 45.167
+  lon: 51.64317
+  kind: ПС
+  status: допущение
+  basis: положение — OSM (источник); доля нагрузки — допущение
+  marks:
+    position:
+      status: источник
+      source: https://www.openstreetmap.org/way/314389857
+    name:
+      status: допущение
+      confidence: не опознана
+      basis: 'оснований нет: ближайший посёлок «Северное Бузачи» в 8.91 км (> 5.0 км), имени и совпадения с документом нет'
+    share:
+      status: допущение
+      basis: поровну между 8 ПС модели; реальная нагрузка — шаг 2.3
+lines:
+- id: R01-1
+  from: 23
+  to: 31
+  km: 127.216
+  conductor: АС-185
+  name: ответвление — ПС 110/35/6 кВ «Бе (цепь 1)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: 401050128;302689266
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/401050128
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 401050128;302689266'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/401050128
+- id: R01-2
+  from: 23
+  to: 31
+  km: 127.216
+  conductor: АС-185
+  name: ответвление — ПС 110/35/6 кВ «Бе (цепь 2)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: 401050128;302689266
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/401050128
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 401050128;302689266'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/401050128
+- id: R02-1
+  from: 27
+  to: 22
+  km: 120.355
+  conductor: АС-185
+  name: ПС у «Сайотес» (на — обрыв линии (цепь 1)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: 290616438;376219964
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/290616438
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 290616438;376219964'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/290616438
+    flags:
+      status: допущение
+      basis: 'теги OSM: fixme'
+- id: R02-2
+  from: 27
+  to: 22
+  km: 120.355
+  conductor: АС-185
+  name: ПС у «Сайотес» (на — обрыв линии (цепь 2)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: 290616438;376219964
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/290616438
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 290616438;376219964'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/290616438
+    flags:
+      status: допущение
+      basis: 'теги OSM: fixme'
+- id: R03-1
+  from: 24
+  to: 2
+  km: 106.468
+  conductor: АС-185
+  name: ПС у «Турыш» (назв — обрыв линии (цепь 1)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '401050169'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/401050169
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 401050169'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/401050169
+- id: R03-2
+  from: 24
+  to: 2
+  km: 106.468
+  conductor: АС-185
+  name: ПС у «Турыш» (назв — обрыв линии (цепь 2)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '401050169'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/401050169
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 401050169'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/401050169
+- id: R04-1
+  from: 25
+  to: 24
+  km: 74.886
+  conductor: АС-185
+  name: ПС 220 кВ «Бейнеу» — ПС у «Турыш» (назв (цепь 1)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '401050169'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/401050169
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 401050169'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/401050169
+- id: R04-2
+  from: 25
+  to: 24
+  km: 74.886
+  conductor: АС-185
+  name: ПС 220 кВ «Бейнеу» — ПС у «Турыш» (назв (цепь 2)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '401050169'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/401050169
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 401050169'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/401050169
+- id: R05-1
+  from: 28
+  to: 1
+  km: 66.309
+  conductor: АС-185
+  name: УРПС 220/110/35/10 — обрыв линии
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '279504177'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/279504177
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 279504177'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: допущение
+      value: 1
+      basis: тега circuits нет; cables=3 → 1 цепь(и) по числу проводов
+- id: R06-1
+  from: 28
+  to: 17
+  km: 53.448
+  conductor: АС-185
+  name: УРПС 220/110/35/10 — ответвление
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: 279504176;279494054
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/279504176
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 279504176;279494054'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: допущение
+      value: 1
+      basis: нет тегов circuits и cables — принята 1 цепь; тега circuits нет; cables=6 → 2 цепь(и) по числу проводов; вдоль линии разное число
+        цепей [1, 2] — принято меньшее (1)
+- id: R07-1
+  from: 14
+  to: 9
+  km: 52.658
+  conductor: АС-185
+  name: ответвление — ответвление (цепь 1)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: 1386960300;1386958409;1386958410;1386960305
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1386960300
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1386960300;1386958409;1386958410;1386960305'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/1386960300
+- id: R07-2
+  from: 14
+  to: 9
+  km: 52.658
+  conductor: АС-185
+  name: ответвление — ответвление (цепь 2)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: 1386960300;1386958409;1386958410;1386960305
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1386960300
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1386960300;1386958409;1386958410;1386960305'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/1386960300
+- id: R08-1
+  from: 27
+  to: 23
+  km: 50.603
+  conductor: АС-185
+  name: ПС у «Сайотес» (на — ответвление (цепь 1)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '290616425'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/290616425
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 290616425'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/290616425
+- id: R08-2
+  from: 27
+  to: 23
+  km: 50.603
+  conductor: АС-185
+  name: ПС у «Сайотес» (на — ответвление (цепь 2)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '290616425'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/290616425
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 290616425'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/290616425
+- id: R09-1
+  from: 4
+  to: 3
+  km: 46.193
+  conductor: АС-185
+  name: ответвление — ответвление (цепь 1)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1386958408'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1386958408
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1386958408'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/1386958408
+- id: R09-2
+  from: 4
+  to: 3
+  km: 46.193
+  conductor: АС-185
+  name: ответвление — ответвление (цепь 2)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1386958408'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1386958408
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1386958408'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/1386958408
+- id: R10-1
+  from: 10
+  to: 11
+  km: 38.641
+  conductor: АС-185
+  name: ответвление — обрыв линии (цепь 1)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1411906953'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1411906953
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1411906953'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/1411906953
+- id: R10-2
+  from: 10
+  to: 11
+  km: 38.641
+  conductor: АС-185
+  name: ответвление — обрыв линии (цепь 2)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1411906953'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1411906953
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1411906953'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/1411906953
+- id: R11-1
+  from: 28
+  to: 16
+  km: 24.634
+  conductor: АС-185
+  name: УРПС 220/110/35/10 — ответвление
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '279493486'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/279493486
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 279493486'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: допущение
+      value: 1
+      basis: тега circuits нет; cables=3 → 1 цепь(и) по числу проводов
+- id: R12-1
+  from: 28
+  to: 16
+  km: 24.588
+  conductor: АС-185
+  name: УРПС 220/110/35/10 — ответвление
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '279493480'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/279493480
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 279493480'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: допущение
+      value: 1
+      basis: тега circuits нет; cables=3 → 1 цепь(и) по числу проводов
+- id: R13-1
+  from: 28
+  to: 32
+  km: 13.874
+  conductor: АС-185
+  name: УРПС 220/110/35/10 — ПС way/314387379
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '279492433'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/279492433
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 279492433'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: допущение
+      value: 1
+      basis: нет тегов circuits и cables — принята 1 цепь
+- id: R14-1
+  from: 28
+  to: 32
+  km: 13.677
+  conductor: АС-185
+  name: УРПС 220/110/35/10 — ПС way/314387379
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '314379042'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/314379042
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 314379042'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: допущение
+      value: 1
+      basis: нет тегов circuits и cables — принята 1 цепь
+- id: R15-1
+  from: 31
+  to: 25
+  km: 7.36
+  conductor: АС-185
+  name: ПС 110/35/6 кВ «Бе — ПС 220 кВ «Бейнеу» (цепь 1)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '401050166'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/401050166
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 401050166'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/401050166
+- id: R15-2
+  from: 31
+  to: 25
+  km: 7.36
+  conductor: АС-185
+  name: ПС 110/35/6 кВ «Бе — ПС 220 кВ «Бейнеу» (цепь 2)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '401050166'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/401050166
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 401050166'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/401050166
+- id: R16-1
+  from: 15
+  to: 12
+  km: 6.093
+  conductor: АС-185
+  name: ответвление — ответвление (цепь 1)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1386958411'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1386958411
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1386958411'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/1386958411
+- id: R16-2
+  from: 15
+  to: 12
+  km: 6.093
+  conductor: АС-185
+  name: ответвление — ответвление (цепь 2)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1386958411'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1386958411
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1386958411'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/1386958411
+- id: R17-1
+  from: 28
+  to: 29
+  km: 5.103
+  conductor: АС-185
+  name: УРПС 220/110/35/10 — ПС way/279504169
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '279504175'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/279504175
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 279504175'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: допущение
+      value: 1
+      basis: нет тегов circuits и cables — принята 1 цепь
+- id: R18-1
+  from: 21
+  to: 20
+  km: 4.119
+  conductor: АС-185
+  name: обрыв линии — ответвление (цепь 1)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '447737017'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/447737017
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 447737017'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: допущение
+      value: 2
+      basis: тега circuits нет; cables=6 → 2 цепь(и) по числу проводов
+- id: R18-2
+  from: 21
+  to: 20
+  km: 4.119
+  conductor: АС-185
+  name: обрыв линии — ответвление (цепь 2)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '447737017'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/447737017
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 447737017'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: допущение
+      value: 2
+      basis: тега circuits нет; cables=6 → 2 цепь(и) по числу проводов
+- id: R19-1
+  from: 10
+  to: 13
+  km: 2.382
+  conductor: АС-185
+  name: ответвление — ответвление (цепь 1)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1386960295'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1386960295
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1386960295'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/1386960295
+- id: R19-2
+  from: 10
+  to: 13
+  km: 2.382
+  conductor: АС-185
+  name: ответвление — ответвление (цепь 2)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1386960295'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1386960295
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1386960295'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/1386960295
+- id: R20-1
+  from: 18
+  to: 19
+  km: 2.319
+  conductor: АС-185
+  name: ответвление — ответвление (цепь 1)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '447737020'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/447737020
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 447737020'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: допущение
+      value: 2
+      basis: тега circuits нет; cables=6 → 2 цепь(и) по числу проводов
+- id: R20-2
+  from: 18
+  to: 19
+  km: 2.319
+  conductor: АС-185
+  name: ответвление — ответвление (цепь 2)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '447737020'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/447737020
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 447737020'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: допущение
+      value: 2
+      basis: тега circuits нет; cables=6 → 2 цепь(и) по числу проводов
+- id: R21-1
+  from: 26
+  to: 10
+  km: 2.263
+  conductor: АС-185
+  name: ПС у «Боранкул» (н — ответвление (цепь 1)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1384588699'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1384588699
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1384588699'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/1384588699
+- id: R21-2
+  from: 26
+  to: 10
+  km: 2.263
+  conductor: АС-185
+  name: ПС у «Боранкул» (н — ответвление (цепь 2)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1384588699'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1384588699
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1384588699'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/1384588699
+- id: R22-1
+  from: 25
+  to: 8
+  km: 2.094
+  conductor: АС-185
+  name: ПС 220 кВ «Бейнеу» — ответвление
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1384588701'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1384588701
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1384588701'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: допущение
+      value: 1
+      basis: нет тегов circuits и cables — принята 1 цепь
+- id: R23-1
+  from: 25
+  to: 8
+  km: 2.065
+  conductor: АС-185
+  name: ПС 220 кВ «Бейнеу» — ответвление
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1384588700'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1384588700
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1384588700'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: допущение
+      value: 1
+      basis: нет тегов circuits и cables — принята 1 цепь
+- id: R24-1
+  from: 23
+  to: 30
+  km: 1.114
+  conductor: АС-185
+  name: ответвление — ПС way/279678200
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '401050167'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/401050167
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 401050167'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 1
+      basis: тег circuits=1
+      source: https://www.openstreetmap.org/way/401050167
+- id: R25-1
+  from: 23
+  to: 30
+  km: 1.105
+  conductor: АС-185
+  name: ответвление — ПС way/279678200
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '401050160'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/401050160
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 401050160'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 1
+      basis: тег circuits=1
+      source: https://www.openstreetmap.org/way/401050160
+- id: R26-1
+  from: 5
+  to: 6
+  km: 1.054
+  conductor: АС-185
+  name: ответвление — ответвление (цепь 1)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1386958414'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1386958414
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1386958414'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/1386958414
+- id: R26-2
+  from: 5
+  to: 6
+  km: 1.054
+  conductor: АС-185
+  name: ответвление — ответвление (цепь 2)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1386958414'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1386958414
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1386958414'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/1386958414
+- id: R27-1
+  from: 8
+  to: 7
+  km: 0.42
+  conductor: АС-185
+  name: ответвление — ответвление (цепь 1)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1386958417'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1386958417
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1386958417'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/1386958417
+- id: R27-2
+  from: 8
+  to: 7
+  km: 0.42
+  conductor: АС-185
+  name: ответвление — ответвление (цепь 2)
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1386958417'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1386958417
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1386958417'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 2
+      basis: тег circuits=2
+      source: https://www.openstreetmap.org/way/1386958417
+- id: R28-1
+  from: 19
+  to: 20
+  km: 0.412
+  conductor: АС-185
+  name: ответвление — ответвление
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '314392293'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/314392293
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 314392293'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: допущение
+      value: 1
+      basis: тега circuits нет; cables=3 → 1 цепь(и) по числу проводов
+- id: R29-1
+  from: 19
+  to: 20
+  km: 0.412
+  conductor: АС-185
+  name: ответвление — ответвление
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '447737019'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/447737019
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 447737019'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: допущение
+      value: 1
+      basis: тега circuits нет; cables=3 → 1 цепь(и) по числу проводов
+- id: R30-1
+  from: 15
+  to: 14
+  km: 0.348
+  conductor: АС-185
+  name: ответвление — ответвление
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1386960299'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1386960299
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1386960299'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 1
+      basis: тег circuits=1
+      source: https://www.openstreetmap.org/way/1386960299
+- id: R31-1
+  from: 15
+  to: 14
+  km: 0.345
+  conductor: АС-185
+  name: ответвление — ответвление
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1386960298'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1386960298
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1386960298'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 1
+      basis: тег circuits=1
+      source: https://www.openstreetmap.org/way/1386960298
+- id: R32-1
+  from: 17
+  to: 18
+  km: 0.334
+  conductor: АС-185
+  name: ответвление — ответвление
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '314392291'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/314392291
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 314392291'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: допущение
+      value: 1
+      basis: тега circuits нет; cables=3 → 1 цепь(и) по числу проводов
+- id: R33-1
+  from: 17
+  to: 18
+  km: 0.329
+  conductor: АС-185
+  name: ответвление — ответвление
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '447737018'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/447737018
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 447737018'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: допущение
+      value: 1
+      basis: тега circuits нет; cables=3 → 1 цепь(и) по числу проводов
+- id: R34-1
+  from: 3
+  to: 9
+  km: 0.312
+  conductor: АС-185
+  name: ответвление — ответвление
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1386960304'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1386960304
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1386960304'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: допущение
+      value: 1
+      basis: тега circuits нет; cables=3 → 1 цепь(и) по числу проводов
+- id: R35-1
+  from: 3
+  to: 9
+  km: 0.312
+  conductor: АС-185
+  name: ответвление — ответвление
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1386960303'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1386960303
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1386960303'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: допущение
+      value: 1
+      basis: тега circuits нет; cables=3 → 1 цепь(и) по числу проводов
+- id: R36-1
+  from: 12
+  to: 13
+  km: 0.309
+  conductor: АС-185
+  name: ответвление — ответвление
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1386960297'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1386960297
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1386960297'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 1
+      basis: тег circuits=1
+      source: https://www.openstreetmap.org/way/1386960297
+- id: R37-1
+  from: 12
+  to: 13
+  km: 0.305
+  conductor: АС-185
+  name: ответвление — ответвление
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1386960296'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1386960296
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1386960296'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 1
+      basis: тег circuits=1
+      source: https://www.openstreetmap.org/way/1386960296
+- id: R38-1
+  from: 6
+  to: 7
+  km: 0.298
+  conductor: АС-185
+  name: ответвление — ответвление
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1386958416'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1386958416
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1386958416'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 1
+      basis: тег circuits=1
+      source: https://www.openstreetmap.org/way/1386958416
+- id: R39-1
+  from: 6
+  to: 7
+  km: 0.294
+  conductor: АС-185
+  name: ответвление — ответвление
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1386958415'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1386958415
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1386958415'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 1
+      basis: тег circuits=1
+      source: https://www.openstreetmap.org/way/1386958415
+- id: R40-1
+  from: 4
+  to: 5
+  km: 0.262
+  conductor: АС-185
+  name: ответвление — ответвление
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1386958413'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1386958413
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1386958413'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 1
+      basis: тег circuits=1
+      source: https://www.openstreetmap.org/way/1386958413
+- id: R41-1
+  from: 4
+  to: 5
+  km: 0.258
+  conductor: АС-185
+  name: ответвление — ответвление
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '1386958412'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/1386958412
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 1386958412'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: источник
+      value: 1
+      basis: тег circuits=1
+      source: https://www.openstreetmap.org/way/1386958412
+- id: R42-1
+  from: 16
+  to: 33
+  km: 0.041
+  conductor: АС-185
+  name: ответвление — ПС way/314389857
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '279493480'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/279493480
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 279493480'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: допущение
+      value: 1
+      basis: тега circuits нет; cables=3 → 1 цепь(и) по числу проводов
+- id: R43-1
+  from: 16
+  to: 33
+  km: 0.039
+  conductor: АС-185
+  name: ответвление — ПС way/314389857
+  status: допущение
+  basis: длина и трасса — OSM (источник); марка провода — допущение
+  osm_ways: '279493486'
+  marks:
+    km:
+      status: источник
+      source: https://www.openstreetmap.org/way/279493486
+      basis: 'сумма длин участков OSM по геометрии (гаверсинус): ways 279493486'
+    conductor:
+      status: допущение
+      basis: марка провода ВЛ 110 кВ в документах не найдена — принята АС-185
+    circuits:
+      status: допущение
+      value: 1
+      basis: тега circuits нет; cables=3 → 1 цепь(и) по числу проводов
+generators:
+- id: EQ1
+  bus: 25
+  name: 'Эквивалент 220 кВ: ПС 220 кВ «Бейнеу»'
+  slack: true
+  p_mw: null
+  p_max_mw: 500
+  q_min_mvar: -300.0
+  q_max_mvar: 300.0
+  v_pu: 1.0
+  ramp_mw_h: 500
+  status: допущение
+  basis: питание из сети 220 кВ через АТ 220/110; сеть 220 кВ и АТ не моделируются (шаг 2.4)
+  marks:
+    location:
+      status: источник
+      source: https://www.lada.kz/aktau_news/society/157917-kegoc-zavershil-planovye-remonty-na-svoikh-obektakh-v-mangistauskoi-oblasti.html (текст
+        статьи); https://www.mrek.kz/assets/app/img/doc/zakupki/%D0%9F%D0%B5%D1%80%D0%B5%D1%87%D0%B5%D0%BD%D1%8C%20%D0%A2%D0%A0%D0%A3%20%D0%BD%D0%B0%202021%20%D0%B3%D0%BE%D0%B4%20%D0%90%D0%9E%20%D0%9C%D0%A0%D0%AD%D0%9A%20%D1%81%20%D0%B8%D0%B7%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F%D0%BC%D0%B8%20%D0%BF%D0%BE%20%D1%81%D0%BE%D1%81%D1%82%D0%BE%D1%8F%D0%BD%D0%B8%D1%8E%20%D0%BD%D0%B0%2031.12.2021%20%D0%B3%D0%BE%D0%B4%D0%B0.pdf
+        (стр. PDF 84)
+      basis: единственная ПС OSM с классом 220 кВ, у которой ближайший посёлок — «Бейнеу» (3.47 км); название ПС совпадает с посёлком; в документах
+        — ПС 220 кВ с шинами 110 кВ
+    p_max_mw:
+      status: допущение
+      basis: мощность АТ не найдена — принят предел 500 МВт (без ограничения)
+    v_pu:
+      status: допущение
+      basis: напряжение шины 110 кВ ПС 220/110 принято 1.0 о.е.
+    q_limits:
+      status: допущение
+      basis: ±0.6·Pmax
+    slack:
+      status: допущение
+      basis: балансирующий — эквивалент самого большого острова
+- id: EQ2
+  bus: 28
+  name: 'Эквивалент 220 кВ: УРПС 220/110/35/10 кВ «Каражанбас»'
+  slack: false
+  p_mw: 0.0
+  p_max_mw: 138.0
+  q_min_mvar: -82.8
+  q_max_mvar: 82.8
+  v_pu: 1.0
+  ramp_mw_h: 138.0
+  status: допущение
+  basis: питание из сети 220 кВ через АТ 220/110; сеть 220 кВ и АТ не моделируются (шаг 2.4)
+  marks:
+    location:
+      status: источник
+      source: https://kus.kz/upload/iblock/a6e/4cbbt2967m4vtfx2u685vy588r87szgj.pdf (стр. PDF 4, 20)
+      basis: единственная ПС OSM с классом 220 кВ, у которой ближайший посёлок — «Каражанбас» (14.1 км); название ПС совпадает с посёлком (месторождением)
+    p_max_mw:
+      status: допущение
+      basis: 'АТ 150 МВА (источник: https://kus.kz/upload/iblock/a6e/4cbbt2967m4vtfx2u685vy588r87szgj.pdf, стр. PDF 4, 20) × cos φ 0.92 (допущение)'
+    v_pu:
+      status: допущение
+      basis: напряжение шины 110 кВ ПС 220/110 принято 1.0 о.е.
+    q_limits:
+      status: допущение
+      basis: ±0.6·Pmax
+    slack:
+      status: допущение
+      basis: в своём острове ядро делает его балансирующим автоматически
+model:
+  alpha_al_per_c:
+    value: 0.00403
+    status: допущение
+    basis: температурный коэффициент сопротивления алюминия (стандартное физическое значение; в модели применяется ко всему проводу АС)
+  conductor_overheat_c:
+    value: 15
+    status: допущение
+    basis: провод под нагрузкой условно на 15 °C теплее воздуха (для поправки сопротивления)
+  reactive_load:
+    tan_phi_base: 0.42
+    tan_phi_per_c_above_25: 0.005
+    status: допущение
+    basis: cos φ ≈ 0.92 при умеренной температуре; в жару растёт реактивная нагрузка кондиционеров
+  static_rating:
+    conductor_t_max_c: 70
+    reference_air_c: 25
+    max_factor: 1.25
+    status: допущение
+    basis: допустимый ток ∝ sqrt((70 − T)/(70 − 25)), ограничен сверху 1.25
+  voltage_limits_pu:
+    crit_low: 0.9
+    warn_low: 0.95
+    warn_high: 1.05
+    crit_high: 1.1
+    status: допущение
+    basis: пороги для прототипа; реальные допустимые уровни определяются нормативами для конкретной сети
+  achr_reserve:
+    value: 0.95
+    status: допущение
+    basis: при дефиците в острове АЧР оставляет нагрузку не более 95 % располагаемой мощности генерации
+summary:
+  lengths_km:
+    sources: 1498.681
+    total: 1498.681
+    share: 1.0
+  conductors_by_km:
+    sources: 0
+    total: 1498.681
+    share: 0.0
+  conductors_by_count:
+    sources: 0
+    total: 59.0
+    share: 0.0
+  circuits_by_km:
+    sources: 1277.822
+    total: 1498.681
+    share: 0.853
+  loads_by_bus:
+    sources: 0
+    total: 8.0
+    share: 0.0
+  generation_by_mw:
+    sources: 0
+    total: 638.0
+    share: 0.0
+  generation_location_by_count:
+    sources: 2.0
+    total: 2.0
+    share: 1.0
+  substation_names_by_count:
+    sources: 3
+    total: 10
+  note: 'доли — по полям marks; «источник» в нагрузках и генерации отсутствует: реальная нагрузка — шаг 2.3'
+islands:
+- feed: way/181270259
+  feed_name: ПС 220 кВ «Бейнеу»
+  km: 646.0
+  buses: 22
+  slack: EQ1
+- feed: way/279492273
+  feed_name: УРПС 220/110/35/10 кВ «Каражанбас»
+  km: 209.6
+  buses: 11
+  slack: EQ2
+not_modelled:
+  unknown_voltage:
+    segments: 161
+    km: 1192.3
+    basis: в OSM нет тега voltage; по решению пользователя (вариант A) в расчёт не входят. Здесь сети Актау, Жетыбая, Жанаозена — в OSM у них
+      нет линий с тегом 110 кВ
+  kv35:
+    segments: 38
+    km: 163.3
+  islands_without_feed: []
+  osm_110kv_total_km: 857.1
+  mrek_110kv_total_km:
+    value: 1526.01
+    status: источник
+    source: https://kase.kz/files/emitters/MREK/mrekp_2024_rus.pdf
+    basis: стр. PDF 4, «Компания в цифрах», 2024 г.
+inventory_220kv:
+  note: в расчёте не участвует (шаг 2.4)
+  substations:
+  - osm: way/181270259
+    name: ПС 220 кВ «Бейнеу»
+    voltage_tag: 220000;110000
+    confidence: средняя
+    status: источник
+    basis: единственная ПС OSM с классом 220 кВ, у которой ближайший посёлок — «Бейнеу» (3.47 км); название ПС совпадает с посёлком; в документах
+      — ПС 220 кВ с шинами 110 кВ
+    source: https://www.lada.kz/aktau_news/society/157917-kegoc-zavershil-planovye-remonty-na-svoikh-obektakh-v-mangistauskoi-oblasti.html (текст
+      статьи); https://www.mrek.kz/assets/app/img/doc/zakupki/%D0%9F%D0%B5%D1%80%D0%B5%D1%87%D0%B5%D0%BD%D1%8C%20%D0%A2%D0%A0%D0%A3%20%D0%BD%D0%B0%202021%20%D0%B3%D0%BE%D0%B4%20%D0%90%D0%9E%20%D0%9C%D0%A0%D0%AD%D0%9A%20%D1%81%20%D0%B8%D0%B7%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F%D0%BC%D0%B8%20%D0%BF%D0%BE%20%D1%81%D0%BE%D1%81%D1%82%D0%BE%D1%8F%D0%BD%D0%B8%D1%8E%20%D0%BD%D0%B0%2031.12.2021%20%D0%B3%D0%BE%D0%B4%D0%B0.pdf
+      (стр. PDF 84)
+  - osm: way/224369643
+    name: ТЭЦ-3
+    voltage_tag: ''
+    confidence: высокая
+    status: источник
+    basis: имя в теге name OSM
+    source: https://www.openstreetmap.org/way/224369643
+  - osm: way/224369699
+    name: ПС у «Умирзак» (название не установлено)
+    voltage_tag: '220000'
+    confidence: низкая
+    status: допущение
+    basis: 'только близость: 3.9 км до посёлка «Умирзак» по OSM'
+    source: ''
+  - osm: way/226831318
+    name: ПС 220/110/10 кВ «Узень»
+    voltage_tag: '220000'
+    confidence: средняя
+    status: источник
+    basis: единственная ПС OSM с классом 220 кВ, у которой ближайший посёлок — «Жанаозен» (5.58 км); ГПЭС в г. Жанаозен подключается к ПС «Узень»
+      (eco_gpes_uzen); Узень — месторождение у Жанаозена
+    source: https://www.mrek.kz/assets/app/img/doc/yearfinot4et/%D0%90%D0%9E%20%D0%9C%D0%A0%D0%AD%D0%9A_%D0%93%D0%BE%D0%B4%D0%BE%D0%B2%D0%BE%D0%B9%20%D0%BE%D1%82%D1%87%D0%B5%D1%82%20%D0%B7%D0%B0%202021%20%D0%B3..pdf
+      (стр. PDF 42); https://ecoportal.kz/Rubric/RubService/LoadFile/56721 (стр. PDF 2)
+  - osm: way/279492273
+    name: УРПС 220/110/35/10 кВ «Каражанбас»
+    voltage_tag: 220000;110000
+    confidence: средняя
+    status: источник
+    basis: единственная ПС OSM с классом 220 кВ, у которой ближайший посёлок — «Каражанбас» (14.1 км); название ПС совпадает с посёлком (месторождением)
+    source: https://kus.kz/upload/iblock/a6e/4cbbt2967m4vtfx2u685vy588r87szgj.pdf (стр. PDF 4, 20)
+  lines_osm:
+  - route: R001
+    km: 396.46
+    ways: '499308991'
+    ends: way/181270259;way/224369643
+    status: источник
+    source: https://www.openstreetmap.org/way/499308991
+    basis: трасса и длина — OSM
+  - route: R002
+    km: 395.75
+    ways: '401050131'
+    ends: way/224369643;way/181270259
+    status: источник
+    source: https://www.openstreetmap.org/way/401050131
+    basis: трасса и длина — OSM
+  - route: R003
+    km: 236.99
+    ways: '401050162'
+    ends: way/181270259;обрыв
+    status: источник
+    source: https://www.openstreetmap.org/way/401050162
+    basis: трасса и длина — OSM
+  - route: R004
+    km: 200.78
+    ways: '1257718415'
+    ends: way/279492273;way/224369643
+    status: источник
+    source: https://www.openstreetmap.org/way/1257718415
+    basis: трасса и длина — OSM
+  - route: R005
+    km: 195.52
+    ways: '279504173'
+    ends: way/224369643;way/279492273
+    status: источник
+    source: https://www.openstreetmap.org/way/279504173
+    basis: трасса и длина — OSM
+  - route: R006
+    km: 195.52
+    ways: '279504174'
+    ends: way/224369643;way/279492273
+    status: источник
+    source: https://www.openstreetmap.org/way/279504174
+    basis: трасса и длина — OSM
+  - route: R007
+    km: 183.5
+    ways: '447434644'
+    ends: обрыв;way/181270259
+    status: источник
+    source: https://www.openstreetmap.org/way/447434644
+    basis: трасса и длина — OSM
+  - route: R009
+    km: 130.28
+    ways: '447688226'
+    ends: way/226831318;way/224369643
+    status: источник
+    source: https://www.openstreetmap.org/way/447688226
+    basis: трасса и длина — OSM
+  - route: R010
+    km: 130.25
+    ways: '447688227'
+    ends: way/226831318;way/224369643
+    status: источник
+    source: https://www.openstreetmap.org/way/447688227
+    basis: трасса и длина — OSM
+  - route: R200
+    km: 0.28
+    ways: '1415174561'
+    ends: way/224369643;way/224369643
+    status: источник
+    source: https://www.openstreetmap.org/way/1415174561
+    basis: трасса и длина — OSM
+  - route: R201
+    km: 0.28
+    ways: '1415174564'
+    ends: way/224369643;way/224369643
+    status: источник
+    source: https://www.openstreetmap.org/way/1415174564
+    basis: трасса и длина — OSM
+  - route: R202
+    km: 0.28
+    ways: '1415174565'
+    ends: way/224369643;way/224369643
+    status: источник
+    source: https://www.openstreetmap.org/way/1415174565
+    basis: трасса и длина — OSM
+  facts_from_documents:
+  - object:
+      type: сеть
+      name: АО «МРЭК» (вся компания)
+    field: длина ВЛ 220 кВ на балансе МРЭК
+    value: 865.1
+    unit: км
+    source: https://kase.kz/files/emitters/MREK/mrekp_2022_rus.pdf
+    location: стр. PDF 5, «Компания в цифрах», таблица «Воздушные ЛЭП»
+  - object:
+      type: сеть
+      name: АО «МРЭК» (вся компания)
+    field: длина ВЛ 220 кВ на балансе МРЭК (2019)
+    value: 665.1
+    unit: км
+    source: https://kase.kz/files/emitters/MREK/mrekp_2019_rus.pdf
+    location: стр. PDF 3, «Компания в цифрах», таблица «Воздушные ЛЭП»
+  - object:
+      type: ПС
+      name: Узень
+      voltage: 220/110/10 кВ
+    field: класс напряжения и наличие автотрансформаторов
+    value: 220/110/10 кВ; два автотрансформатора (АТ-1, АТ-2)
+    unit: null
+    source: https://www.mrek.kz/assets/app/img/doc/yearfinot4et/%D0%90%D0%9E%20%D0%9C%D0%A0%D0%AD%D0%9A_%D0%93%D0%BE%D0%B4%D0%BE%D0%B2%D0%BE%D0%B9%20%D0%BE%D1%82%D1%87%D0%B5%D1%82%20%D0%B7%D0%B0%202021%20%D0%B3..pdf
+    location: стр. PDF 42 и 10
+  - object:
+      type: ПС
+      name: Каражанбас (УРПС)
+      voltage: 220/110/35/10 кВ
+    field: мощность автотрансформатора
+    value: 1x150
+    unit: МВА
+    source: https://kus.kz/upload/iblock/a6e/4cbbt2967m4vtfx2u685vy588r87szgj.pdf
+    location: стр. PDF 4 и 20, итоги 2019 г. по АО «МРЭК»
+  - object:
+      type: ПС
+      name: Бейнеу
+      voltage: 220 кВ
+    field: существование, класс напряжения
+    value: ПС 220 кВ (KEGOC), шины 110 кВ
+    unit: null
+    source: https://www.lada.kz/aktau_news/society/157917-kegoc-zavershil-planovye-remonty-na-svoikh-obektakh-v-mangistauskoi-oblasti.html
+    location: текст статьи от 08.09.2026
+  - object:
+      type: ПС
+      name: Атырау
+      voltage: 220 кВ
+    field: точка поставки в Мангистау по ВЛ 220 кВ
+    value: ВЛ-220 кВ Л-2135, Л-2145 от ПС 220 кВ «Атырау» до ПС 220 кВ «Бейнеу»
+    unit: null
+    source: https://www.mrek.kz/assets/app/img/doc/zakupki/%D0%9F%D0%B5%D1%80%D0%B5%D1%87%D0%B5%D0%BD%D1%8C%20%D0%A2%D0%A0%D0%A3%20%D0%BD%D0%B0%202021%20%D0%B3%D0%BE%D0%B4%20%D0%90%D0%9E%20%D0%9C%D0%A0%D0%AD%D0%9A%20%D1%81%20%D0%B8%D0%B7%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F%D0%BC%D0%B8%20%D0%BF%D0%BE%20%D1%81%D0%BE%D1%81%D1%82%D0%BE%D1%8F%D0%BD%D0%B8%D1%8E%20%D0%BD%D0%B0%2031.12.2021%20%D0%B3%D0%BE%D0%B4%D0%B0.pdf
+    location: стр. PDF 84, позиция закупки электроэнергии
+  - object:
+      type: линия
+      name: ВЛ 220 кВ Актау – Каражанбас
+    field: длина
+    value: 198
+    unit: км
+    source: https://kase.kz/files/emitters/MREK/mrekp_2019_rus.pdf
+    location: стр. PDF 6, обращение руководства
+  - object:
+      type: линия
+      name: ВЛ 220 кВ Л-2135, Л-2145 (Атырау – Бейнеу)
+    field: диспетчерские номера и концы
+    value: Л-2135, Л-2145; ПС 220 кВ «Атырау» – ПС 220 кВ «Бейнеу»
+    unit: null
+    source: https://www.mrek.kz/assets/app/img/doc/zakupki/%D0%9F%D0%B5%D1%80%D0%B5%D1%87%D0%B5%D0%BD%D1%8C%20%D0%A2%D0%A0%D0%A3%20%D0%BD%D0%B0%202021%20%D0%B3%D0%BE%D0%B4%20%D0%90%D0%9E%20%D0%9C%D0%A0%D0%AD%D0%9A%20%D1%81%20%D0%B8%D0%B7%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F%D0%BC%D0%B8%20%D0%BF%D0%BE%20%D1%81%D0%BE%D1%81%D1%82%D0%BE%D1%8F%D0%BD%D0%B8%D1%8E%20%D0%BD%D0%B0%2031.12.2021%20%D0%B3%D0%BE%D0%B4%D0%B0.pdf
+    location: стр. PDF 84
+  - object:
+      type: линия
+      name: ВЛ 220 кВ KEGOC в Мангистауской обл. (четыре линии)
+    field: суммарная длина отремонтированных линий
+    value: 1078.7
+    unit: км
+    source: https://www.lada.kz/aktau_news/society/157917-kegoc-zavershil-planovye-remonty-na-svoikh-obektakh-v-mangistauskoi-oblasti.html
+    location: текст статьи от 08.09.2026
+  - object:
+      type: линия
+      name: ВЛ 220 кВ Западно-Казахстанский энергоузел – Атырау – Мангистау (5 линий)
+    field: суммарная длина и пропускная способность
+    value:
+      length_km: 780
+      lines: 5
+      transfer_atyrau_mangistau_mw: 50 → 200
+    unit: км; МВт
+    source: https://interfax.com/newsroom/top-stories/97037/
+    location: текст статьи от 29.11.2023
