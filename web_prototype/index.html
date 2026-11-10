@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MANGYSTAU AI DIGITAL TWIN</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#121211;--s1:#1a1a19;--s2:#222220;--s3:#2c2c2a;--line:#383835;--ink:#f3f2ee;--ink2:#bcbab2;--ink3:#8a8880;--good:#0ca30c;--warn:#fab219;--serious:#ec835a;--crit:#d03b3b;--accent:#3d8bfd;--accent2:#7cb4ff;--mono:'IBM Plex Mono',ui-monospace,monospace}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.45}
+.wrap{max-width:1180px;margin:0 auto;padding:16px 14px 60px}
+header{border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap}
+h1{font-size:20px;letter-spacing:.06em;margin:0;font-weight:700} h1 span{color:var(--accent2)}
+.sub{color:var(--ink3);font-size:13px;margin-top:2px}
+h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin:0 0 10px;font-weight:600}
+h3{font-size:14px;margin:12px 0 6px}
+.card{background:var(--s1);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;margin-bottom:12px}
+.grid{display:grid;gap:12px}
+@media(min-width:900px){.g2{grid-template-columns:1fr 1fr}.g32{grid-template-columns:1.3fr 1fr}}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button{font:inherit;cursor:pointer;border-radius:9px;border:1px solid var(--line);background:var(--s2);color:var(--ink);padding:8px 12px}
+.chip{font-size:12.5px;padding:6px 10px;border-radius:999px;color:var(--ink2)}
+.chip.on{background:rgba(61,139,253,.18);border-color:var(--accent);color:var(--ink)}
+.ctl{display:grid;grid-template-columns:120px 1fr 70px;gap:8px;align-items:center;margin-bottom:6px;font-size:13.5px}
+.ctl input{width:100%;accent-color:var(--accent)} .ctl .v{font-family:var(--mono);text-align:right}
+.note{font-size:12px;color:var(--ink3)}
+.tabs{display:inline-flex;gap:3px;background:var(--s2);border-radius:9px;padding:3px}
+.tabs button{border:0;background:transparent;padding:5px 10px;font-size:12.5px;color:var(--ink2);border-radius:7px}
+.tabs button.on{background:var(--s3);color:var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--ink2);margin-top:6px}
+.legend i{display:inline-block;width:12px;height:4px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.legend i.sq{width:11px;height:11px;border-radius:3px}
+.legend i.dash{background:none!important;border-top:2px dashed currentColor;height:0}
+.hero{border-radius:12px;padding:16px;border:1px solid rgba(255,255,255,.08);background:var(--s1);margin-bottom:12px;border-left:5px solid var(--ink3)}
+.hero.lvl0{border-left-color:var(--good)} .hero.lvl1{border-left-color:var(--warn)} .hero.lvl2{border-left-color:var(--crit)}
+.hero .top{display:flex;align-items:center;gap:12px}
+.hero .ic{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:20px;flex:none;background:var(--s3)}
+.lvl0 .ic{background:var(--good);color:#fff} .lvl1 .ic{background:var(--warn);color:#0b0b0b} .lvl2 .ic{background:var(--crit);color:#fff}
+.hero .t{font-size:19px;font-weight:700}
+.hero .d{font-size:13px;color:var(--ink2)}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
+@media(min-width:700px){.kpis{grid-template-columns:repeat(4,1fr)}}
+.kpi{background:var(--s2);border-radius:9px;padding:9px 10px}
+.kpi .k{font-size:11.5px;color:var(--ink3)} .kpi .n{font-family:var(--mono);font-size:19px;font-weight:500} .kpi .n small{font-size:12px;color:var(--ink3)}
+.kpi .s{font-size:11.5px;color:var(--ink2)}
+.rec{margin-top:12px;background:var(--s2);border-radius:10px;padding:10px 12px}
+.rec p{margin:4px 0;font-size:14px;color:var(--ink2)} .rec b{color:var(--ink)}
+table.t{width:100%;border-collapse:collapse;font-size:12.5px}
+table.t td,table.t th{padding:5px 6px;border-bottom:1px solid var(--s3);text-align:left}
+table.t th{color:var(--ink3);font-weight:500} table.t td.n{font-family:var(--mono);text-align:right}
+.tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;font-family:var(--mono)}
+.tag.c{background:rgba(208,59,59,.2);color:#ff9a9a} .tag.w{background:rgba(250,178,25,.18);color:var(--warn)} .tag.g{background:rgba(12,163,12,.18);color:#6fd66f}
+#tip{position:fixed;pointer-events:none;background:#0b0b0b;border:1px solid var(--line);color:var(--ink);font-size:12px;padding:6px 8px;border-radius:7px;z-index:9;display:none;max-width:250px;line-height:1.35}
+#tip .m{font-family:var(--mono)}
+.prog{height:4px;background:var(--s3);border-radius:2px;overflow:hidden;margin-top:6px} .prog i{display:block;height:100%;background:var(--accent);width:0;transition:width .2s}
+ul.r{margin:6px 0 0;padding-left:18px;font-size:13.5px} ul.r li{margin-bottom:3px}
+ul.r li.c::marker{color:var(--crit)} ul.r li.w::marker{color:var(--warn)}
+.acts{list-style:none;padding:0;margin:8px 0 0;counter-reset:a}
+.acts li{counter-increment:a;position:relative;padding:6px 8px 6px 32px;background:var(--s2);border-radius:8px;margin-bottom:4px;font-size:13.5px}
+.acts li::before{content:counter(a);position:absolute;left:8px;top:6px;width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;display:grid;place-items:center}
+.acts li.shed::before{background:var(--serious)}
+.honest td:first-child{white-space:nowrap;color:var(--ink)}
+.honest td{color:var(--ink2);vertical-align:top}
+details summary{cursor:pointer;color:var(--ink2);font-size:13px}
+.scroll{overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><h1>MANGYSTAU <span>AI</span> DIGITAL TWIN</h1>
+  <div class="sub">Риск на завтра: погода → прогноз нагрузки → динамический допустимый ток → проверка N-1 по часам → превентивные меры</div></div>
+  <div class="note" id="badge">Обучение модели нагрузки…</div>
+</header>
+
+<section class="card">
+  <h2>1 · Погода на завтра</h2>
+  <div class="row" id="presets" style="margin-bottom:10px"></div>
+  <div class="grid g2">
+    <div>
+      <div class="ctl"><label>Макс. температура</label><input type="range" id="pTmax" min="-25" max="50" step="1"><span class="v" id="vTmax"></span></div>
+      <div class="ctl"><label>Мин. температура</label><input type="range" id="pTmin" min="-35" max="38" step="1"><span class="v" id="vTmin"></span></div>
+      <div class="ctl"><label>Ветер днём</label><input type="range" id="pWd" min="0" max="15" step="0.5"><span class="v" id="vWd"></span></div>
+      <div class="ctl"><label>Ветер ночью</label><input type="range" id="pWn" min="0" max="15" step="0.5"><span class="v" id="vWn"></span></div>
+      <div class="ctl"><label>Облачность</label><input type="range" id="pCl" min="0" max="1" step="0.05"><span class="v" id="vCl"></span></div>
+      <div class="row" style="margin-top:4px"><label class="note"><input type="checkbox" id="pWe"> выходной день</label></div>
+      <p class="note">По умолчанию — ориентировочная типичная погода для завтрашней даты. Это сценарий, а не прогноз. Живой прогноз (например, Open-Meteo для Актау) подключается через сервер: страница приложения не может сама обращаться к внешним сайтам.</p>
+    </div>
+    <div>
+      <svg id="wchart" viewBox="0 0 420 150" style="width:100%"></svg>
+      <svg id="windchart" viewBox="0 0 420 110" style="width:100%"></svg>
+    </div>
+  </div>
+</section>
+
+<div id="hero" class="hero"><div class="note">Расчёт…</div></div>
+
+<section class="card">
+  <div class="row" style="justify-content:space-between;margin-bottom:8px">
+    <h2 style="margin:0">4 · Карта риска N-1: час × отказ элемента</h2>
+    <div class="row">
+      <div class="tabs" id="tMode"><button data-v="dlr" class="on">DLR</button><button data-v="static">Справочный ток</button></div>
+      <div class="tabs" id="tBand"><button data-v="p90" class="on">P90</button><button data-v="p50">P50</button></div>
+      <div class="tabs" id="tView"><button data-v="before" class="on">Без мер</button><button data-v="after">С превентивными мерами</button></div>
+    </div>
+  </div>
+  <div class="scroll"><svg id="heat" viewBox="0 0 460 300" style="width:100%"></svg></div>
+  <div class="legend">
+    <span><i class="sq" style="background:#24402a"></i>норма</span>
+    <span><i class="sq" style="background:var(--warn)"></i>предупреждение (U&lt;95% или загрузка 90–100%)</span>
+    <span><i class="sq" style="background:var(--crit)"></i>✕ авария (перегрузка, U&lt;90%, предел P–V, обесточение)</span>
+    <span><i class="sq" style="background:#55534e"></i>? расчёт не сошёлся — не определено</span>
+  </div>
+  <p class="note">Каждая клетка — отдельный расчёт режима: «что будет, если в этот час отключится этот элемент». Нажмите на клетку, чтобы посмотреть подробности.</p>
+  <div class="prog"><i id="prevProg"></i></div>
+</section>
+
+<section class="card" id="detail">
+  <h2>Детали сценария</h2>
+  <div class="grid g32">
+    <div><svg id="map" viewBox="0 0 400 300" style="width:100%"></svg>
+      <div class="legend"><span><i style="background:var(--good)"></i>&lt;90%</span><span><i style="background:var(--warn)"></i>90–100%</span><span><i style="background:var(--crit)"></i>&gt;100%</span><span><i class="dash" style="color:var(--ink3)"></i>отключена</span><span><i class="sq" style="background:none;border:2px solid var(--accent);border-radius:50%"></i>генерация</span></div>
+    </div>
+    <div id="detailText"></div>
+  </div>
+</section>
+
+<div class="grid g2">
+  <section class="card">
+    <h2>2 · Прогноз нагрузки (нейросеть)</h2>
+    <svg id="lchart" viewBox="0 0 420 220" style="width:100%"></svg>
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>прогноз P50</span>
+      <span><i class="sq" style="background:rgba(61,139,253,.25)"></i>интервал P10–P90</span>
+      <span><i class="dash" style="color:var(--ink3)"></i>линейная модель</span>
+      <span><i class="sq" style="background:var(--ink);border-radius:50%;width:7px;height:7px"></i>эталон (синтетический)</span>
+    </div>
+    <div id="domainWarn" class="note" style="color:var(--warn);margin-top:6px"></div>
+  </section>
+  <section class="card">
+    <h2>3 · Допустимый ток линии: справочник vs DLR</h2>
+    <div class="row" id="lineSel" style="margin-bottom:6px"></div>
+    <svg id="rchart" viewBox="0 0 420 200" style="width:100%"></svg>
+    <div class="legend">
+      <span><i class="dash" style="color:var(--ink2)"></i>справочный (по температуре)</span>
+      <span><i style="background:var(--accent)"></i>DLR (температура, ветер, солнце)</span>
+      <span><i style="background:var(--serious)"></i>ток в худшем случае N-1</span>
+    </div>
+    <p class="note" id="rnote"></p>
+  </section>
+</div>
+
+<div class="grid g2">
+  <section class="card">
+    <h2>Качество моделей</h2>
+    <div id="mlBox" class="note">Генерация истории и обучение…</div>
+    <div class="prog"><i id="mlProg"></i></div>
+  </section>
+  <section class="card">
+    <h2>Что здесь реальное, а что условное</h2>
+    <table class="t honest">
+      <tr><td>Расчёт режима</td><td>AC-потокораспределение (Ньютон–Рафсон → демпфированный Ньютон → метод продолжения), пределы генераторов по Q, острова с местной генерацией и АЧР. Несходимость не считается аварией автоматически: отдельно определяется предел передаваемой мощности (P–V) и отдельно — «не определено».</td></tr>
+      <tr><td>DLR</td><td>Реальная физика: тепловой баланс провода по IEEE 738 (конвекция, излучение, солнце), Tпровода ≤ 70 °C.</td></tr>
+      <tr><td>Схема сети</td><td><b>Условная.</b> Названия подстанций настоящие, параметры линий типовые (АС-120/185/240), нагрузки и мощности придуманы.</td></tr>
+      <tr><td>История нагрузки</td><td><b>Синтетическая</b> (2 года по часам). Для реального применения нужны данные АСКУЭ / СО и архив погоды.</td></tr>
+      <tr><td>Погода</td><td><b>Сценарий</b>, не живой прогноз.</td></tr>
+      <tr><td>Проверка ядра</td><td>Расчёт сверен с независимым решателем на Python (другая формулировка, метод Пауэлла / Левенберга–Марквардта, старт с плоских напряжений) на 400 случайных сценариях: 368 режимов совпали с точностью 0,002 В и 10⁻⁶ МВт; все 32 случая «предел P–V» подтверждены. Аналитический якобиан совпал с конечными разностями.</td></tr>
+      <tr><td>Не моделируется</td><td>Трансформаторы 110/35/10 кВ, динамика (качания, частота), релейная защита, каскадные отключения, минимальная загрузка и пуск генераторов.</td></tr>
+      <tr><td>Риск</td><td>Не «вероятность аварии», а число отказов, после которых режим становится недопустимым. Вероятности потребуют статистики отказов оборудования.</td></tr>
+    </table>
+  </section>
+</div>
+</div>
+<div id="tip"></div>
+
+<script>
+// ===== MANGYSTAU DIGITAL TWIN — расчётное ядро v2 =====
+// Схема иллюстративная (упрощённая модель 110 кВ), параметры — типовые для проводов АС.
+const BASE = 100, KV = 110;
+const ZB = KV * KV / BASE;
+
+const COND = {
+  'АС-240': { r: 0.118, x: 0.405, b: 2.81e-6, I: 610 },
+  'АС-185': { r: 0.159, x: 0.413, b: 2.75e-6, I: 510 },
+  'АС-120': { r: 0.244, x: 0.427, b: 2.66e-6, I: 390 },
+};
+const BUSES = [
+  { id: 1, name: 'МАЭК (Актау)', short: 'МАЭК', x: 40, y: 220, share: 0 },
+  { id: 2, name: 'ПС Актау-Город', short: 'Актау', x: 100, y: 170, share: 55 / 160 },
+  { id: 3, name: 'ПС Промзона', short: 'Промзона', x: 125, y: 245, share: 30 / 160 },
+  { id: 4, name: 'ПС Форт-Шевченко', short: 'Форт-Шевч.', x: 55, y: 50, share: 12 / 160 },
+  { id: 5, name: 'ПС Жетыбай', short: 'Жетыбай', x: 220, y: 215, share: 18 / 160 },
+  { id: 6, name: 'ПС Жанаозен', short: 'Жанаозен', x: 310, y: 262, share: 30 / 160 },
+  { id: 7, name: 'ПС Шетпе', short: 'Шетпе', x: 190, y: 110, share: 6 / 160 },
+  { id: 8, name: 'ПС Бейнеу', short: 'Бейнеу', x: 360, y: 45, share: 9 / 160 },
+];
+const LINES = [
+  { id: 'L1', f: 1, t: 2, km: 15, c: 'АС-240', name: 'МАЭК — Актау' },
+  { id: 'L2', f: 1, t: 3, km: 22, c: 'АС-240', name: 'МАЭК — Промзона' },
+  { id: 'L3', f: 2, t: 3, km: 14, c: 'АС-185', name: 'Актау — Промзона' },
+  { id: 'L4', f: 1, t: 7, km: 95, c: 'АС-185', name: 'МАЭК — Шетпе' },
+  { id: 'L5', f: 7, t: 4, km: 75, c: 'АС-120', name: 'Шетпе — Форт-Шевченко' },
+  { id: 'L6', f: 3, t: 5, km: 70, c: 'АС-185', name: 'Промзона — Жетыбай' },
+  { id: 'L7', f: 5, t: 6, km: 60, c: 'АС-185', name: 'Жетыбай — Жанаозен' },
+  { id: 'L8', f: 2, t: 5, km: 85, c: 'АС-185', name: 'Актау — Жетыбай' },
+  { id: 'L9', f: 6, t: 8, km: 150, c: 'АС-120', name: 'Жанаозен — Бейнеу' },
+  { id: 'L10', f: 7, t: 8, km: 175, c: 'АС-120', name: 'Шетпе — Бейнеу' },
+  { id: 'L11', f: 2, t: 4, km: 110, c: 'АС-120', name: 'Актау — Форт-Шевченко' },
+];
+const GENS = [
+  { id: 'G1', bus: 1, name: 'МАЭК (ТЭЦ/ТЭС)', P: null, Pmax: 330, Qmin: -150, Qmax: 220, V: 1.04, slack: true, ramp: 60 },
+  { id: 'G2', bus: 6, name: 'ГТЭС Жанаозен', P: 35, Pmax: 50, Qmin: -20, Qmax: 30, V: 1.02, ramp: 20 },
+  { id: 'G3', bus: 5, name: 'ГТУ Жетыбай', P: 15, Pmax: 28, Qmin: -10, Qmax: 18, V: 1.02, ramp: 12 },
+];
+const VMIN_CRIT = 0.90, VMIN_WARN = 0.95, VMAX_WARN = 1.05, VMAX_CRIT = 1.10;
+
+function defaultLoadForTemp(T) { return 150 * (1 + 0.011 * Math.max(0, T - 22) + 0.006 * Math.max(0, 5 - T)); }
+function ratingFactor(T) { return Math.min(1.25, Math.sqrt(Math.max(0.05, (70 - T) / 45))); }
+function lineRatingA(line, T) { return COND[line.c].I * ratingFactor(T); }
+function defaultCtrl() { return { gP: { G2: 35, G3: 15 }, vset: { G1: 1.04, G2: 1.02, G3: 1.02 }, bsk: {}, shed: {} }; }
+function cloneCtrl(c) { return JSON.parse(JSON.stringify(c)); }
+function normScn(s) {
+  return { T: s.T ?? 25, load: s.load ?? defaultLoadForTemp(s.T ?? 25), linesOut: s.linesOut || [], gensOut: s.gensOut || [], ctrl: s.ctrl || defaultCtrl(), ratingA: s.ratingA || null };
+}
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+function solveLinear(A, b) {
+  const n = b.length, M = A.map((r, i) => [...r, b[i]]);
+  for (let c = 0; c < n; c++) {
+    let p = c; for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[p][c])) p = r;
+    if (Math.abs(M[p][c]) < 1e-12) return null;
+    [M[c], M[p]] = [M[p], M[c]];
+    for (let r = c + 1; r < n; r++) { const f = M[r][c] / M[c][c]; if (f) for (let k = c; k <= n; k++) M[r][k] -= f * M[c][k]; }
+  }
+  const x = new Array(n).fill(0);
+  for (let r = n - 1; r >= 0; r--) { let s = M[r][n]; for (let k = r + 1; k < n; k++) s -= M[r][k] * x[k]; x[r] = s / M[r][r]; }
+  return x;
+}
+
+// ---------- построение острова: матрица проводимостей ----------
+function buildIsland(ids, s, lineIn) {
+  const idx = {}; ids.forEach((id, i) => idx[id] = i);
+  const n = ids.length;
+  const G = Array.from({ length: n }, () => new Array(n).fill(0));
+  const B = Array.from({ length: n }, () => new Array(n).fill(0));
+  const rT = 1 + 0.00403 * (s.T + 15 - 20); // провод нагрет ≈ на 15 °C выше воздуха
+  const lp = {};
+  lineIn.filter(l => idx[l.f] !== undefined).forEach(l => {
+    const c = COND[l.c];
+    const R = c.r * rT * l.km / ZB, X = c.x * l.km / ZB, Bc = c.b * l.km * ZB;
+    const d = R * R + X * X, g = R / d, b = -X / d, i = idx[l.f], j = idx[l.t];
+    lp[l.id] = { g, b, Bc, i, j };
+    G[i][i] += g; B[i][i] += b + Bc / 2; G[j][j] += g; B[j][j] += b + Bc / 2;
+    G[i][j] -= g; B[i][j] -= b; G[j][i] -= g; B[j][i] -= b;
+  });
+  return { ids, idx, n, G, B, lp };
+}
+
+// ---------- Ньютон–Рафсон (полярные координаты) ----------
+function calcPQ(isl, V, th) {
+  const { n, G, B } = isl, P = new Array(n).fill(0), Q = new Array(n).fill(0);
+  for (let i = 0; i < n; i++) for (let k = 0; k < n; k++) {
+    if (G[i][k] === 0 && B[i][k] === 0) continue;
+    const a = th[i] - th[k], co = Math.cos(a), si = Math.sin(a);
+    P[i] += V[i] * V[k] * (G[i][k] * co + B[i][k] * si);
+    Q[i] += V[i] * V[k] * (G[i][k] * si - B[i][k] * co);
+  }
+  return { P, Q };
+}
+function buildJ(isl, pvq, pq, V, th, P, Q) {
+  const { G, B } = isl, m = pvq.length + pq.length;
+  const J = Array.from({ length: m }, () => new Array(m).fill(0));
+  const c = (i, k) => Math.cos(th[i] - th[k]), s = (i, k) => Math.sin(th[i] - th[k]);
+  const dPdth = (i, k) => i === k ? -Q[i] - B[i][i] * V[i] * V[i] : V[i] * V[k] * (G[i][k] * s(i, k) - B[i][k] * c(i, k));
+  const dPdV = (i, k) => i === k ? P[i] / V[i] + G[i][i] * V[i] : V[i] * (G[i][k] * c(i, k) + B[i][k] * s(i, k));
+  const dQdth = (i, k) => i === k ? P[i] - G[i][i] * V[i] * V[i] : -V[i] * V[k] * (G[i][k] * c(i, k) + B[i][k] * s(i, k));
+  const dQdV = (i, k) => i === k ? Q[i] / V[i] - B[i][i] * V[i] : V[i] * (G[i][k] * s(i, k) - B[i][k] * c(i, k));
+  pvq.forEach((i, r) => { pvq.forEach((k, cc) => J[r][cc] = dPdth(i, k)); pq.forEach((k, cc) => J[r][pvq.length + cc] = dPdV(i, k)); });
+  pq.forEach((i, r) => { pvq.forEach((k, cc) => J[pvq.length + r][cc] = dQdth(i, k)); pq.forEach((k, cc) => J[pvq.length + r][pvq.length + cc] = dQdV(i, k)); });
+  return J;
+}
+// типы узлов и заданные мощности для острова при коэффициенте нагрузки lam
+function islandSetup(isl, gens, Pd, Qd, lam) {
+  const n = isl.n, type = new Array(n).fill('PQ'), Vs = new Array(n).fill(1), Pg = new Array(n).fill(0), Qf = new Array(n).fill(0);
+  gens.forEach(g => {
+    const k = isl.idx[g.bus];
+    if (g.slack) { type[k] = 'SL'; Vs[k] = g.Vset; return; }
+    Pg[k] += g.Pset / BASE;
+    if (g.fixedQ === null) { if (type[k] !== 'SL') { type[k] = 'PV'; Vs[k] = g.Vset; } }
+    else Qf[k] += g.fixedQ / BASE;
+  });
+  const pvq = [], pq = [];
+  for (let i = 0; i < n; i++) { if (type[i] !== 'SL') pvq.push(i); if (type[i] === 'PQ') pq.push(i); }
+  const Psp = Pg.map((p, i) => p - lam * Pd[i]), Qsp = Qf.map((q, i) => q - lam * Qd[i]);
+  return { type, Vs, pvq, pq, Psp, Qsp };
+}
+function nr(isl, setup, V0, th0, damped, maxIt) {
+  const { Vs, pvq, pq, Psp, Qsp, type } = setup;
+  const V = V0.map((v, i) => type[i] === 'PQ' ? v : Vs[i]), th = th0.slice();
+  for (let it = 0; it < maxIt; it++) {
+    const { P, Q } = calcPQ(isl, V, th);
+    const mis = [...pvq.map(i => Psp[i] - P[i]), ...pq.map(i => Qsp[i] - Q[i])];
+    const mx = mis.reduce((a, b) => Math.max(a, Math.abs(b)), 0);
+    if (mx < 1e-8) return { ok: true, V, th, P, Q, it };
+    if (!isFinite(mx) || mx > 1e3) return { ok: false };
+    const J = buildJ(isl, pvq, pq, V, th, P, Q);
+    const dx = solveLinear(J, mis);
+    if (!dx) return { ok: false };
+    let a = 1;
+    if (damped) { const mth = Math.max(0, ...pvq.map((_, r) => Math.abs(dx[r]))), mv = Math.max(0, ...pq.map((_, r) => Math.abs(dx[pvq.length + r]))); a = Math.min(1, 0.3 / Math.max(mth, 1e-9), 0.08 / Math.max(mv, 1e-9)); }
+    pvq.forEach((i, r) => th[i] += a * dx[r]);
+    pq.forEach((i, r) => V[i] += a * dx[pvq.length + r]);
+    if (V.some(v => v < 0.2 || v > 2)) return { ok: false };
+  }
+  return { ok: false };
+}
+// решение с учётом ограничений генераторов по реактивной мощности
+function solveQ(isl, gens, Pd, Qd, lam, V0, th0, damped) {
+  let sol = null;
+  for (let outer = 0; outer < 5; outer++) {
+    const setup = islandSetup(isl, gens, Pd, Qd, lam);
+    sol = nr(isl, setup, V0, th0, damped, damped ? 80 : 30);
+    if (!sol.ok) return { ok: false };
+    let changed = false;
+    gens.forEach(g => {
+      if (g.slack || g.fixedQ !== null) return;
+      const k = isl.idx[g.bus];
+      const Qg = (sol.Q[k] + lam * Qd[k]) * BASE;
+      if (Qg > g.Qmax + 1e-6) { g.fixedQ = g.Qmax; changed = true; } else if (Qg < g.Qmin - 1e-6) { g.fixedQ = g.Qmin; changed = true; }
+    });
+    if (!changed) { sol.setup = setup; return sol; }
+    V0 = sol.V; th0 = sol.th;
+  }
+  return { ok: false };
+}
+// наименьшее сингулярное число якобиана (обратные итерации) — признак «носа» P–V кривой
+function sigmaMin(isl, sol) {
+  const { pvq, pq } = sol.setup;
+  const J = buildJ(isl, pvq, pq, sol.V, sol.th, sol.P, sol.Q);
+  const m = J.length; if (!m) return 1;
+  const JT = J[0].map((_, c) => J.map(r => r[c]));
+  const JTJ = JT.map(r => J[0].map((_, c) => r.reduce((s, v, k) => s + v * J[k][c], 0)));
+  let x = new Array(m).fill(1), lam = 0;
+  for (let it = 0; it < 30; it++) {
+    const y = solveLinear(JTJ, x); if (!y) return 0;
+    const nrm = Math.hypot(...y); lam = nrm / Math.hypot(...x); x = y.map(v => v / nrm);
+  }
+  return 1 / Math.sqrt(lam);
+}
+// метод продолжения по нагрузке: отличает численную несходимость от физического предела
+function continuation(isl, gens, Pd, Qd, lamTarget, keepCurve) {
+  const n = isl.n, flatV = new Array(n).fill(1), flatT = new Array(n).fill(0);
+  const reset = () => gens.forEach(g => g.fixedQ = null);
+  reset();
+  let lam = Math.min(0.25, lamTarget), sol = solveQ(isl, gens, Pd, Qd, lam, flatV, flatT, true);
+  if (!sol.ok) return { status: 'numerical' };
+  const curve = [{ lam, minV: Math.min(...sol.V) }];
+  const sig0 = sigmaMin(isl, sol);
+  let step = 0.2;
+  while (lam < lamTarget - 1e-9) {
+    const tryLam = Math.min(lamTarget, lam + step);
+    const saved = gens.map(g => g.fixedQ);
+    const s2 = solveQ(isl, gens, Pd, Qd, tryLam, sol.V, sol.th, true);
+    if (s2.ok) { lam = tryLam; sol = s2; curve.push({ lam, minV: Math.min(...sol.V) }); if (keepCurve) step = Math.min(step * 1.5, 0.2); }
+    else { gens.forEach((g, i) => g.fixedQ = saved[i]); step /= 2; if (step < 0.003) break; }
+  }
+  if (lam >= lamTarget - 1e-9) return { status: 'ok', sol, curve, lambdaMax: null };
+  const sig = sigmaMin(isl, sol);
+  return { status: 'pv_limit', sol, curve, lambdaMax: lam, sigmaRatio: sig / sig0, confirmed: sig / sig0 < 0.25 };
+}
+
+// ---------- расчёт режима всей сети ----------
+function runPowerFlow(input) {
+  const s = normScn(input), T = s.T, ctrl = s.ctrl;
+  const lineIn = LINES.filter(l => !s.linesOut.includes(l.id));
+  // компоненты связности (острова)
+  const adj = {}; BUSES.forEach(b => adj[b.id] = []);
+  lineIn.forEach(l => { adj[l.f].push(l.t); adj[l.t].push(l.f); });
+  const comp = {}, comps = [];
+  BUSES.forEach(b => { if (comp[b.id] !== undefined) return; const c = []; const q = [b.id]; comp[b.id] = comps.length; while (q.length) { const u = q.shift(); c.push(u); adj[u].forEach(v => { if (comp[v] === undefined) { comp[v] = comps.length; q.push(v); } }); } comps.push(c.sort((a, b) => a - b)); });
+
+  const tan = 0.42 + 0.005 * Math.max(0, T - 25);
+  const loadBus = {}; let shedMW = 0;
+  BUSES.forEach(b => { const p0 = s.load * b.share, sh = ctrl.shed[b.id] || 0; shedMW += p0 * sh; loadBus[b.id] = { P: p0 * (1 - sh), P0: p0 }; });
+
+  const res = { scn: s, loadBus, shedMW, unserved: 0, achr: 0, islands: [], V: {}, ang: {}, gen: {}, flows: {}, live: [], status: 'ok' };
+  const reasons = [], warns = [];
+  let score = 0, worstStatus = 'ok', lambdaMax = null, pvInfo = null;
+
+  comps.forEach(ids => {
+    const gens = GENS.filter(g => !s.gensOut.includes(g.id) && ids.includes(g.bus)).map(g => ({ ...g, Pset: g.slack ? 0 : Math.min(g.Pmax, ctrl.gP[g.id] ?? g.P), Vset: ctrl.vset[g.id] ?? g.V, fixedQ: null, slack: false }));
+    const names = ids.map(id => BUSES[id - 1].name);
+    const islLoad = ids.reduce((a, id) => a + loadBus[id].P, 0);
+    if (!gens.length) {
+      if (islLoad > 0.01) { res.unserved += islLoad; reasons.push(`Обесточены: ${names.join(', ')} — ${islLoad.toFixed(1)} МВт без питания.`); score += 50 * islLoad; }
+      ids.forEach(id => { res.V[id] = 0; res.ang[id] = 0; });
+      return;
+    }
+    // балансирующий источник острова: МАЭК, иначе самый мощный местный генератор
+    const slack = gens.find(g => g.id === 'G1') || gens.slice().sort((a, b) => b.Pmax - a.Pmax)[0];
+    slack.slack = true;
+    const isMain = slack.id === 'G1';
+    // АЧР: если мощности острова не хватает, часть нагрузки отключается автоматически
+    let achrFrac = 0;
+    const cap = gens.reduce((a, g) => a + g.Pmax, 0);
+    if (!isMain && islLoad * 1.03 > cap) achrFrac = Math.min(1, 1 - cap * 0.95 / islLoad);
+    const isl = buildIsland(ids, s, lineIn);
+    const Pd = new Array(isl.n).fill(0), Qd = new Array(isl.n).fill(0);
+    ids.forEach(id => { const k = isl.idx[id], p = loadBus[id].P * (1 - achrFrac); Pd[k] = p / BASE; Qd[k] = p * tan / BASE; });
+    ids.forEach(id => { const k = isl.idx[id]; isl.B[k][k] += (ctrl.bsk[id] || 0) / BASE; });
+    if (achrFrac > 0) { res.achr += islLoad * achrFrac; reasons.push(`Островной режим с дефицитом: ${names.join(', ')} питаются только от ${slack.name}; АЧР отключает ≈${(islLoad * achrFrac).toFixed(1)} МВт.`); score += 50 * islLoad * achrFrac; }
+    else if (!isMain) warns.push(`Островной режим: ${names.join(', ')} ${names.length > 1 ? 'отделились' : 'отделилась'} от МАЭК и питаются от ${gens.map(g => g.name).join(' и ')}.`);
+    res.islands.push({ ids, slack: slack.id, main: isMain, achrMW: islLoad * achrFrac });
+
+    // 1) обычный Ньютон с плоского старта; 2) с демпфированием; 3) продолжение по нагрузке
+    const flatV = new Array(isl.n).fill(1), flatT = new Array(isl.n).fill(0);
+    let sol = solveQ(isl, gens, Pd, Qd, 1, flatV, flatT, false), how = 'nr';
+    if (!sol.ok) { gens.forEach(g => g.fixedQ = null); sol = solveQ(isl, gens, Pd, Qd, 1, flatV, flatT, true); how = 'damped'; }
+    if (!sol.ok) {
+      const cr = continuation(isl, gens, Pd, Qd, 1, false);
+      if (cr.status === 'ok') { sol = cr.sol; how = 'continuation'; }
+      else if (cr.status === 'pv_limit') {
+        worstStatus = 'pv_limit'; lambdaMax = lambdaMax === null ? cr.lambdaMax : Math.min(lambdaMax, cr.lambdaMax);
+        pvInfo = cr;
+        reasons.push(`Предел передаваемой мощности: режим существует только до ${(cr.lambdaMax * 100).toFixed(0)}% заданной нагрузки (метод продолжения${cr.confirmed ? '; якобиан у предела почти вырожден — это «нос» P–V кривой' : '; вырождение якобиана не подтверждено — нужна проверка'}).`);
+        score += 1e4 * (1 - cr.lambdaMax) + 1e3;
+        sol = cr.sol; how = 'pv';
+      } else {
+        if (worstStatus !== 'pv_limit') worstStatus = 'numerical';
+        warns.push(`Расчёт по острову (${names.join(', ')}) не сошёлся ни одним из трёх методов — результат не определён, требуется проверка.`);
+        score += 5e3;
+        ids.forEach(id => { res.V[id] = null; });
+        return;
+      }
+    }
+    res.islands[res.islands.length - 1].method = how;
+    const lamUsed = how === 'pv' ? pvInfo.lambdaMax : 1;
+    ids.forEach(id => { const k = isl.idx[id]; res.V[id] = sol.V[k]; res.ang[id] = sol.th[k] * 180 / Math.PI; res.live.push(id); });
+    gens.forEach(g => {
+      const k = isl.idx[g.bus];
+      const others = gens.filter(h => h.bus === g.bus && h !== g).reduce((a, h) => a + h.Pset / BASE, 0);
+      const P = g.slack ? (sol.P[k] + lamUsed * Pd[k] - others) * BASE : g.Pset;
+      const Q = g.fixedQ !== null ? g.fixedQ : (sol.Q[k] + lamUsed * Qd[k]) * BASE;
+      res.gen[g.id] = { P, Q, Pmax: g.Pmax, Qmax: g.Qmax, Qmin: g.Qmin, atQlim: g.fixedQ !== null, slack: g.slack };
+    });
+    Object.entries(isl.lp).forEach(([id, { g, b, Bc, i, j }]) => {
+      const flow = (a, c) => {
+        const Va = sol.V[a], Vc = sol.V[c], d = sol.th[a] - sol.th[c];
+        const P = Va * Va * g - Va * Vc * (g * Math.cos(d) + b * Math.sin(d));
+        const Q = -Va * Va * (b + Bc / 2) - Va * Vc * (g * Math.sin(d) - b * Math.cos(d));
+        return { P: P * BASE, Q: Q * BASE, I: Math.hypot(P, Q) * BASE / (Math.sqrt(3) * KV * Va) * 1000 };
+      };
+      const l = LINES.find(x => x.id === id);
+      const Imax = (s.ratingA && s.ratingA[id]) || lineRatingA(l, T);
+      const a = flow(i, j), z = flow(j, i), I = Math.max(a.I, z.I);
+      res.flows[id] = { P: a.P, Q: a.Q, I, Imax, loading: I / Imax, loss: a.P + z.P };
+    });
+  });
+  LINES.forEach(l => { if (!res.flows[l.id]) res.flows[l.id] = { out: s.linesOut.includes(l.id), dead: !s.linesOut.includes(l.id), Imax: (s.ratingA && s.ratingA[l.id]) || lineRatingA(l, T), loading: 0, P: 0, Q: 0, I: 0, loss: 0 }; });
+  GENS.forEach(g => { if (!res.gen[g.id]) res.gen[g.id] = { P: 0, Q: 0, Pmax: g.Pmax, out: true }; });
+  res.status = worstStatus;
+  res.lambdaMax = lambdaMax; res.pv = pvInfo;
+  res.converged = worstStatus === 'ok';
+  res.collapse = worstStatus === 'pv_limit';
+  res.unknown = worstStatus === 'numerical';
+  res.losses = Object.values(res.flows).reduce((x, f) => x + (f.loss || 0), 0);
+
+  if (worstStatus === 'ok') {
+    BUSES.forEach(b => {
+      const v = res.V[b.id]; if (!res.live.includes(b.id)) return;
+      if (v < VMIN_CRIT) reasons.push(`Напряжение на ${b.name}: ${(v * KV).toFixed(1)} кВ (${(v * 100).toFixed(1)}% Uном) — ниже аварийного предела 90%.`);
+      else if (v < VMIN_WARN) warns.push(`Пониженное напряжение на ${b.name}: ${(v * 100).toFixed(1)}% Uном.`);
+      if (v > VMAX_CRIT) reasons.push(`Перенапряжение на ${b.name}: ${(v * 100).toFixed(1)}% Uном.`);
+      else if (v > VMAX_WARN) warns.push(`Повышенное напряжение на ${b.name}: ${(v * 100).toFixed(1)}%.`);
+      score += 400 * Math.max(0, VMIN_WARN - v) + 2000 * Math.max(0, VMIN_CRIT - v) + 400 * Math.max(0, v - VMAX_WARN);
+    });
+    LINES.forEach(l => {
+      const f = res.flows[l.id]; if (f.out || f.dead) return;
+      if (f.loading > 1) reasons.push(`Перегрузка ${l.id} (${l.name}): ${(f.loading * 100).toFixed(0)}% допустимого тока (${f.I.toFixed(0)} из ${f.Imax.toFixed(0)} А).`);
+      else if (f.loading > 0.9) warns.push(`${l.id} (${l.name}) загружена на ${(f.loading * 100).toFixed(0)}%.`);
+      score += 50 * Math.max(0, f.loading - 0.9) + 600 * Math.max(0, f.loading - 1);
+    });
+    Object.entries(res.gen).forEach(([id, g]) => {
+      if (g.out) return;
+      if (g.slack && g.P > g.Pmax + 0.5) { reasons.push(`${GENS.find(x => x.id === id).name}: требуется ${g.P.toFixed(0)} МВт при располагаемых ${g.Pmax} МВт.`); score += 10 * (g.P - g.Pmax); }
+      if (g.atQlim && !g.slack) warns.push(`${id} вышел на предел реактивной мощности (${g.Q.toFixed(0)} Мвар).`);
+    });
+    res.minV = Math.min(...res.live.map(id => res.V[id]));
+    res.maxLoading = Math.max(0, ...Object.values(res.flows).map(f => f.loading || 0));
+  }
+  res.totalLoad = res.live.reduce((x, id) => x + loadBus[id].P, 0);
+  res.reasons = reasons; res.warns = warns; res.score = score;
+  res.critical = reasons.length > 0;
+  return res;
+}
+
+// P–V кривая для детального просмотра: минимальное напряжение в зависимости от доли нагрузки
+function pvCurve(input, lamMax = 2.5) {
+  const s = normScn(input);
+  const curve = [];
+  for (let lam = 0.3; lam <= lamMax + 1e-9; lam += 0.05) {
+    const r = runPowerFlow({ ...s, load: s.load * lam });
+    if (r.status !== 'ok') { const lm = r.lambdaMax; if (lm) curve.push({ lam: lam * lm, minV: r.pv && r.pv.sol ? Math.min(...r.pv.sol.V) : null, nose: true }); return { curve, lambdaMax: r.lambdaMax ? lam * r.lambdaMax : lam }; }
+    curve.push({ lam, minV: r.minV, crit: r.critical });
+  }
+  return { curve, lambdaMax: null };
+}
+
+// ===== Оптимизация: жадный поиск управляющих воздействий =====
+function objective(r) {
+  if (r.status === 'pv_limit') return 1e6 * (2 - r.lambdaMax) + r.shedMW * 100;
+  if (r.status === 'numerical') return 1.5e6 + r.shedMW * 100;
+  return r.score * 100 + r.shedMW * 60 + r.losses + Object.values(r.scn.ctrl.bsk).reduce((a, b) => a + b, 0) * 0.15 + ((r.gen.G2 && !r.gen.G2.out ? r.gen.G2.P : 0) + (r.gen.G3 && !r.gen.G3.out ? r.gen.G3.P : 0)) * 0.3;
+}
+function candidateActions(scn, ctrl) {
+  const acts = [];
+  GENS.filter(g => !g.slack && !scn.gensOut.includes(g.id)).forEach(g => {
+    if ((ctrl.gP[g.id] ?? g.P) < g.Pmax) acts.push({ kind: 'gen', id: g.id, d: 5 });
+    if ((ctrl.gP[g.id] ?? g.P) > 0) acts.push({ kind: 'gen', id: g.id, d: -5 });
+  });
+  GENS.filter(g => !scn.gensOut.includes(g.id)).forEach(g => { if ((ctrl.vset[g.id] ?? g.V) < 1.07) acts.push({ kind: 'vset', id: g.id, d: 0.01 }); });
+  [4, 5, 6, 7, 8, 3].forEach(b => { if ((ctrl.bsk[b] || 0) < 20) acts.push({ kind: 'bsk', bus: b, d: 5 }); });
+  [2, 3, 4, 5, 6, 7, 8].forEach(b => { if ((ctrl.shed[b] || 0) < 0.5) acts.push({ kind: 'shed', bus: b, d: 0.05 }); });
+  return acts;
+}
+function applyAction(ctrl, a) {
+  const c = cloneCtrl(ctrl);
+  if (a.kind === 'gen') c.gP[a.id] = Math.max(0, Math.min(GENS.find(g => g.id === a.id).Pmax, (c.gP[a.id] ?? 0) + a.d));
+  if (a.kind === 'vset') c.vset[a.id] = +((c.vset[a.id] ?? 1) + a.d).toFixed(3);
+  if (a.kind === 'bsk') c.bsk[a.bus] = (c.bsk[a.bus] || 0) + a.d;
+  if (a.kind === 'shed') c.shed[a.bus] = +((c.shed[a.bus] || 0) + a.d).toFixed(2);
+  return c;
+}
+function optimize(scnIn, maxSteps = 40) {
+  const scn = normScn(scnIn);
+  let ctrl = cloneCtrl(scn.ctrl), cur = runPowerFlow({ ...scn, ctrl }), best = objective(cur);
+  const steps = [];
+  for (let k = 0; k < maxSteps; k++) {
+    let pick = null, pickRes = null, pickObj = best, pickCtrl = null;
+    for (const a of candidateActions(scn, ctrl)) {
+      const c2 = applyAction(ctrl, a), r = runPowerFlow({ ...scn, ctrl: c2 }), o = objective(r);
+      if (o < pickObj - 1e-6) { pickObj = o; pick = a; pickRes = r; pickCtrl = c2; }
+    }
+    if (!pick) break;
+    steps.push(pick); ctrl = pickCtrl; cur = pickRes; best = pickObj;
+  }
+  const base = scn.ctrl, summary = [];
+  Object.keys(ctrl.gP).forEach(id => { const d = ctrl.gP[id] - (base.gP[id] ?? 0); if (Math.abs(d) > 0.01) summary.push(`${d > 0 ? 'Загрузить' : 'Разгрузить'} ${id} (${GENS.find(g => g.id === id).name}): ${base.gP[id]} → ${ctrl.gP[id]} МВт`); });
+  Object.keys(ctrl.vset).forEach(id => { const d = ctrl.vset[id] - (base.vset[id] ?? 1); if (Math.abs(d) > 1e-4) summary.push(`Уставка напряжения ${id}: ${(base.vset[id] * 100).toFixed(0)}% → ${(ctrl.vset[id] * 100).toFixed(0)}% Uном`); });
+  Object.keys(ctrl.bsk).forEach(b => { const d = ctrl.bsk[b] - (base.bsk[b] || 0); if (d > 0) summary.push(`Включить БСК ${d} Мвар на ${BUSES[b - 1].name}`); });
+  Object.keys(ctrl.shed).forEach(b => { const d = ctrl.shed[b] - (base.shed[b] || 0); if (d > 0) summary.push(`Ограничить потребление ${BUSES[b - 1].name} на ${(d * 100).toFixed(0)}% (${(scn.load * BUSES[b - 1].share * d).toFixed(1)} МВт)`); });
+  return { ctrl, result: cur, steps, summary };
+}
+
+if (typeof module !== 'undefined') module.exports = { BUSES, LINES, GENS, COND, runPowerFlow, optimize, pvCurve, buildIsland, calcPQ, buildJ, defaultLoadForTemp, ratingFactor, lineRatingA, defaultCtrl, KV, BASE, ZB };
+
+// ===== РИСК НА ЗАВТРА: погода → нагрузка → допустимый ток → N-1 по часам =====
+
+// --- Динамический допустимый ток провода (упрощённый IEEE 738-2012, SI) ---
+const COND_PHYS = {
+  'АС-240': { D: 0.0216, R20: 0.118e-3 },
+  'АС-185': { D: 0.0188, R20: 0.159e-3 },
+  'АС-120': { D: 0.0152, R20: 0.244e-3 },
+};
+const TC_MAX = 70; // допустимая температура провода, °C
+function dlrAmp(condName, Ta, wind, solar, Tc = TC_MAX) {
+  const c = COND_PHYS[condName];
+  const D = c.D, Tf = (Tc + Ta) / 2, He = 30;
+  const mu = 1.458e-6 * Math.pow(Tf + 273, 1.5) / (Tf + 383.4);
+  const rho = (1.293 - 1.525e-4 * He + 6.379e-9 * He * He) / (1 + 0.00367 * Tf);
+  const kf = 2.424e-2 + 7.477e-5 * Tf - 4.407e-9 * Tf * Tf;
+  const dT = Math.max(0.1, Tc - Ta);
+  const V = Math.max(0, wind);
+  const Re = D * rho * V / mu;
+  const Kang = 0.855; // ветер под углом ~45° к линии
+  const qc1 = (1.01 + 1.35 * Math.pow(Re, 0.52)) * kf * dT * Kang;
+  const qc2 = 0.754 * Math.pow(Re, 0.6) * kf * dT * Kang;
+  const qcn = 3.645 * Math.sqrt(rho) * Math.pow(D, 0.75) * Math.pow(dT, 1.25);
+  const qc = Math.max(qc1, qc2, qcn);
+  const eps = 0.5, alpha = 0.5;
+  const qr = 17.8 * D * eps * (Math.pow((Tc + 273) / 100, 4) - Math.pow((Ta + 273) / 100, 4));
+  const qs = alpha * solar * D;
+  const R = c.R20 * (1 + 0.00403 * (Tc - 20));
+  return Math.sqrt(Math.max(0, qc + qr - qs) / R);
+}
+// Статический допустимый ток «по справочнику»: норматив при +25 °C с поправкой на температуру воздуха
+function staticAmp(line, Ta) { return lineRatingA(line, Ta); }
+
+// --- Погода на сутки по сценарию ---
+// Ориентировочные типичные значения для Актау по месяцам (Tmax, Tmin, ветер) — не климатическая справка, а стартовая точка
+const MONTH_TYPICAL = [[2, -4, 6], [3, -3, 6], [9, 2, 6], [17, 9, 5], [24, 16, 5], [30, 21, 5], [33, 24, 4.5], [32, 23, 4.5], [26, 17, 5], [17, 10, 5], [10, 4, 6], [4, -1, 6]];
+const MONTH_NAMES = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+function typicalPreset(month) { const [Tmax, Tmin, w] = MONTH_TYPICAL[month - 1]; return { name: 'Типичный день месяца', Tmax, Tmin, windDay: w, windNight: Math.max(1, w - 1.5), cloud: month >= 11 || month <= 2 ? 0.5 : 0.15, month }; }
+const WEATHER_PRESETS = {
+  summer: { name: 'Обычный летний день', Tmax: 36, Tmin: 24, windDay: 4.5, windNight: 3, cloud: 0.1, month: 7 },
+  heat: { name: 'Волна жары, штиль', Tmax: 46, Tmin: 31, windDay: 1.5, windNight: 1, cloud: 0, month: 7 },
+  heatwind: { name: 'Жара с ветром', Tmax: 44, Tmin: 30, windDay: 8, windNight: 6, cloud: 0.05, month: 7 },
+  autumn: { name: 'Ноябрь (типичная погода)', Tmax: 12, Tmin: 5, windDay: 6, windNight: 5, cloud: 0.5, month: 11 },
+  frost: { name: 'Мороз', Tmax: -12, Tmin: -22, windDay: 8, windNight: 7, cloud: 0.3, month: 1 },
+};
+function dayWeather(p) {
+  const out = [];
+  const summerness = Math.cos(2 * Math.PI * (p.month - 7) / 12); // 1 летом, -1 зимой
+  const dayLen = 12 + 3 * summerness, noon = 12.5;
+  const Gmax = 650 + 300 * summerness;
+  for (let h = 0; h < 24; h++) {
+    // минимум ~05:00, максимум ~15:00
+    const ph = h <= 5 ? (h + 24 - 15) / 14 : h <= 15 ? (h - 5) / 10 : (h - 15) / 14;
+    const shape = h > 5 && h <= 15 ? (1 - Math.cos(Math.PI * ph)) / 2 : (1 + Math.cos(Math.PI * ph)) / 2;
+    const T = p.Tmin + (p.Tmax - p.Tmin) * shape;
+    const sun = Math.max(0, Math.cos(Math.PI * (h + 0.5 - noon) / dayLen));
+    const solar = Gmax * Math.pow(sun, 1.2) * (1 - 0.75 * p.cloud);
+    const dayw = Math.max(0, Math.sin(Math.PI * (h - 7) / 14));
+    const wind = p.windNight + (p.windDay - p.windNight) * dayw;
+    out.push({ h, T, wind, solar });
+  }
+  return out;
+}
+
+// --- «Истинная» модель нагрузки для синтетической истории ---
+// Промышленность (нефтедобыча) ~ постоянна, бытовая — с вечерним пиком, кондиционирование растёт с жарой.
+const RES_PROFILE = [0.55, 0.5, 0.47, 0.46, 0.47, 0.52, 0.62, 0.72, 0.78, 0.8, 0.8, 0.82, 0.84, 0.84, 0.83, 0.84, 0.88, 0.95, 1.0, 1.0, 0.97, 0.9, 0.78, 0.65];
+const OCC = h => 0.55 + 0.45 * Math.max(0, Math.sin(Math.PI * (h - 8) / 16));
+function trueLoad(h, T, Tlag, weekend) {
+  const ind = 88;
+  const res = 48 * RES_PROFILE[h] * (weekend ? 1.06 : 1);
+  const comm = weekend ? 4 : 12 * Math.max(0, Math.sin(Math.PI * (h - 7) / 12));
+  const cool = 3.1 * Math.max(0, Tlag - 24) * OCC(h) + 0.06 * Math.pow(Math.max(0, Tlag - 30), 2) * OCC(h);
+  const heat = 1.3 * Math.max(0, 8 - Tlag) * (0.7 + 0.3 * RES_PROFILE[h]);
+  return ind * (weekend ? 0.97 : 1) + res + comm + cool + heat;
+}
+function makeHistory(years = 2, seed = 21) {
+  const rnd = mulberry32(seed);
+  const gauss = () => { let u = 0, v = 0; while (!u) u = rnd(); v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+  const rows = [];
+  let anom = 0, eps = 0, Tprev = [10, 10, 10];
+  for (let d = 0; d < 365 * years; d++) {
+    const doy = d % 365;
+    const summer = Math.max(0, Math.sin(2 * Math.PI * (doy - 105) / 365));
+    anom = 0.8 * anom + gauss() * (2.0 + 1.4 * summer);
+    const mean = 12 + 15 * Math.sin(2 * Math.PI * (doy - 105) / 365) + anom + (anom > 0 ? 0.2 * anom * summer : 0);
+    const amp = 4.5 + 2.5 * Math.sin(2 * Math.PI * (doy - 105) / 365) + rnd() * 2;
+    const month = Math.floor(doy / 30.4) + 1;
+    const windD = 2 + rnd() * 7, windN = Math.max(0.5, windD - 1 - rnd() * 2);
+    const w = dayWeather({ Tmax: mean + amp, Tmin: mean - amp, windDay: windD, windNight: windN, cloud: rnd() * 0.6, month });
+    const weekend = (d % 7) >= 5;
+    for (const x of w) {
+      const Tlag = (x.T + Tprev[0] + Tprev[1]) / 3;
+      Tprev = [x.T, Tprev[0], Tprev[1]];
+      eps = 0.85 * eps + gauss() * 1.6;
+      rows.push({ d, h: x.h, T: x.T, Tlag, Tmax: mean + amp, weekend, load: trueLoad(x.h, x.T, Tlag, weekend) + eps });
+    }
+  }
+  return rows;
+}
+
+// --- Признаки и модели прогноза нагрузки ---
+function loadFeatures(r) {
+  return [
+    Math.sin(2 * Math.PI * r.h / 24), Math.cos(2 * Math.PI * r.h / 24),
+    Math.sin(4 * Math.PI * r.h / 24), Math.cos(4 * Math.PI * r.h / 24),
+    r.weekend ? 1 : 0, (r.T - 12) / 15, (r.Tlag - 12) / 15, (r.Tmax - 15) / 15,
+  ];
+}
+// Базовая модель: линейная регрессия (час + температура) — то, что обычно используют как ориентир
+function fitLinear(rows) {
+  const X = rows.map(r => { const f = new Array(24).fill(0); f[r.h] = 1; return [...f, r.weekend ? 1 : 0, r.T]; });
+  const y = rows.map(r => r.load);
+  const n = X[0].length;
+  const A = Array.from({ length: n }, () => new Array(n).fill(0)), b = new Array(n).fill(0);
+  X.forEach((x, k) => { for (let i = 0; i < n; i++) { b[i] += x[i] * y[k]; for (let j = 0; j < n; j++) A[i][j] += x[i] * x[j]; } });
+  for (let i = 0; i < n; i++) A[i][i] += 1e-3;
+  const w = solveLinear(A, b);
+  return { predict: r => { const f = new Array(24).fill(0); f[r.h] = 1; const x = [...f, r.weekend ? 1 : 0, r.T]; return x.reduce((s, xi, i) => s + xi * w[i], 0); } };
+}
+class MLPReg {
+  constructor(nIn, nH, seed = 5) {
+    const rnd = mulberry32(seed), rn = () => rnd() * 2 - 1;
+    this.W1 = Array.from({ length: nH }, () => Array.from({ length: nIn }, () => rn() * Math.sqrt(2 / nIn)));
+    this.b1 = new Array(nH).fill(0); this.W2 = Array.from({ length: nH }, () => rn() * Math.sqrt(1 / nH)); this.b2 = 0;
+    this.nH = nH; this.nIn = nIn; this.m = {}; this.v = {}; this.t = 0;
+  }
+  fwd(x) { const h = this.W1.map((w, j) => Math.tanh(w.reduce((s, wi, i) => s + wi * x[i], this.b1[j]))); return { h, y: h.reduce((s, hj, j) => s + hj * this.W2[j], this.b2) }; }
+  predictRaw(x) { return this.fwd(x).y; }
+  step(batch, lr) {
+    const { nH, nIn } = this;
+    const gW1 = Array.from({ length: nH }, () => new Array(nIn).fill(0)), gb1 = new Array(nH).fill(0), gW2 = new Array(nH).fill(0); let gb2 = 0;
+    for (const d of batch) {
+      const { h, y } = this.fwd(d.x); const dy = y - d.y; gb2 += dy;
+      for (let j = 0; j < nH; j++) { gW2[j] += dy * h[j]; const dh = dy * this.W2[j] * (1 - h[j] * h[j]); gb1[j] += dh; for (let i = 0; i < nIn; i++) gW1[j][i] += dh * d.x[i]; }
+    }
+    const N = batch.length; this.t++;
+    const B1 = 0.9, B2 = 0.999, t = this.t;
+    const up = (k, val, g) => { const m = this.m[k] = B1 * (this.m[k] || 0) + (1 - B1) * g; const v = this.v[k] = B2 * (this.v[k] || 0) + (1 - B2) * g * g; return val - lr * (m / (1 - B1 ** t)) / (Math.sqrt(v / (1 - B2 ** t)) + 1e-8); };
+    for (let j = 0; j < nH; j++) { for (let i = 0; i < nIn; i++) this.W1[j][i] = up(`a${j}_${i}`, this.W1[j][i], gW1[j][i] / N); this.b1[j] = up(`b${j}`, this.b1[j], gb1[j] / N); this.W2[j] = up(`c${j}`, this.W2[j], gW2[j] / N); }
+    this.b2 = up('d', this.b2, gb2 / N);
+  }
+}
+const LOAD_MU = 165, LOAD_SD = 30;
+function* trainLoadModel(train, epochs = 6, nH = 16) {
+  const data = train.map(r => ({ x: loadFeatures(r), y: (r.load - LOAD_MU) / LOAD_SD }));
+  const m = new MLPReg(data[0].x.length, nH);
+  const rnd = mulberry32(9);
+  for (let e = 0; e < epochs; e++) {
+    for (let i = data.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [data[i], data[j]] = [data[j], data[i]]; }
+    const lr = 0.01 * Math.pow(0.6, e);
+    for (let k = 0; k < data.length; k += 32) m.step(data.slice(k, k + 32), lr);
+    yield { epoch: e + 1, epochs };
+  }
+  m.predict = r => m.predictRaw(loadFeatures(r)) * LOAD_SD + LOAD_MU;
+  return m;
+}
+function metrics(model, rows) {
+  let ae = 0, ape = 0, se = 0; const res = [];
+  rows.forEach(r => { const p = model.predict(r); const e = r.load - p; ae += Math.abs(e); ape += Math.abs(e) / r.load; se += e * e; res.push(e); });
+  res.sort((a, b) => a - b);
+  const q = f => res[Math.floor(f * (res.length - 1))];
+  return { mae: ae / rows.length, mape: 100 * ape / rows.length, rmse: Math.sqrt(se / rows.length), q10: q(0.1), q90: q(0.9), q95: q(0.95) };
+}
+function hotMetrics(model, rows) { return metrics(model, rows.filter(r => r.T >= 35)); }
+
+// --- Суточный анализ N-1 ---
+const CONTINGENCIES = [{ id: 'base', label: 'Нормальная схема', linesOut: [], gensOut: [] },
+  ...LINES.map(l => ({ id: l.id, label: `${l.id} · ${l.name}`, linesOut: [l.id], gensOut: [] })),
+  { id: 'G2', label: 'G2 · ГТЭС Жанаозен', linesOut: [], gensOut: ['G2'] },
+  { id: 'G3', label: 'G3 · ГТУ Жетыбай', linesOut: [], gensOut: ['G3'] }];
+
+function forecastDay(weather, model, weekend, q90) {
+  const Tm = Math.max(...weather.map(w => w.T));
+  let Tprev = [weather[23].T, weather[22].T]; // предыдущие сутки ~ такие же
+  return weather.map(w => {
+    const Tlag = (w.T + Tprev[0] + Tprev[1]) / 3; Tprev = [w.T, Tprev[0]];
+    const r = { h: w.h, T: w.T, Tlag, Tmax: Tm, weekend };
+    const p50 = model.predict(r);
+    return { ...w, Tlag, p50, p90: p50 + q90, truth: trueLoad(w.h, w.T, Tlag, weekend) };
+  });
+}
+function ratingsFor(w, mode) {
+  const out = {};
+  LINES.forEach(l => { out[l.id] = mode === 'dlr' ? dlrAmp(l.c, w.T, w.wind, w.solar) : staticAmp(l, w.T); });
+  return out;
+}
+function classify(r) {
+  if (r.unknown) return 3;
+  if (!r.converged || r.critical) return 2;
+  if ((r.warns || []).some(x => !/предел реактивной/.test(x))) return 1;
+  return 0;
+}
+function analyzeDay(fc, mode, useP90) {
+  return fc.map(w => {
+    const ratingA = ratingsFor(w, mode);
+    const load = useP90 ? w.p90 : w.p50;
+    const cells = CONTINGENCIES.map(c => {
+      const r = runPowerFlow({ T: w.T, load, linesOut: c.linesOut, gensOut: c.gensOut, ratingA });
+      return { c, r, st: classify(r), maxL: r.converged ? r.maxLoading : 9, minV: r.converged ? r.minV : 0 };
+    });
+    return { w, load, ratingA, cells, nCrit: cells.filter(x => x.st >= 2).length, nWarn: cells.filter(x => x.st === 1).length };
+  });
+}
+
+if (typeof module !== 'undefined') module.exports = { dlrAmp, staticAmp, dayWeather, WEATHER_PRESETS, makeHistory, fitLinear, trainLoadModel, metrics, hotMetrics, forecastDay, analyzeDay, CONTINGENCIES, trueLoad };
+
+// --- Превентивная мера на час: подбор загрузки местной генерации и уставок напряжения (N-1-безопасный режим) ---
+function hourScore(cells, ctrl) {
+  let s = (Math.abs(ctrl.gP.G2 - 35) + Math.abs(ctrl.gP.G3 - 15)) * 0.3 + (ctrl.vset.G2 !== 1.02 ? 1 : 0);
+  cells.forEach(x => { s += x.st >= 2 ? 1000 + 300 * Math.max(0, (x.maxL || 0) - 1) : x.st === 1 ? 10 : 0; });
+  return s;
+}
+function evalHour(hr, ctrl, list) {
+  return list.map(c => {
+    const r = runPowerFlow({ T: hr.w.T, load: hr.load, linesOut: c.linesOut, gensOut: c.gensOut, ratingA: hr.ratingA, ctrl });
+    return { c, r, st: classify(r), maxL: r.converged ? r.maxLoading : 9, minV: r.converged ? r.minV : 0 };
+  });
+}
+function preventiveHour(hr) {
+  const base = defaultCtrl();
+  const baseScore = hourScore(hr.cells, base);
+  let relevantIds = new Set(hr.cells.filter(x => x.st > 0 || x.c.id === 'base').map(x => x.c.id));
+  let best = base, bestCells = hr.cells, bestFull = baseScore;
+  for (let round = 0; round < 3; round++) {
+    const relevant = CONTINGENCIES.filter(c => relevantIds.has(c.id));
+    let cand = null, candS = Infinity;
+    for (let g2 = 0; g2 <= 50; g2 += 5) for (const g3 of [0, 5, 10, 15, 20, 25, 28]) for (const vs of [1.02, 1.05]) {
+      const ctrl = { gP: { G2: g2, G3: g3 }, vset: { G1: vs === 1.05 ? 1.05 : 1.04, G2: vs, G3: vs }, bsk: {}, shed: {} };
+      const sc = hourScore(evalHour(hr, ctrl, relevant), ctrl);
+      if (sc < candS - 1e-9) { candS = sc; cand = ctrl; }
+    }
+    const full = evalHour(hr, cand, CONTINGENCIES);
+    const fullS = hourScore(full, cand);
+    if (fullS < bestFull - 1e-9) { best = cand; bestCells = full; bestFull = fullS; }
+    const newBad = full.filter(x => x.st > 0 && !relevantIds.has(x.c.id));
+    if (!newBad.length) break;
+    newBad.forEach(x => relevantIds.add(x.c.id));
+  }
+  const changed = best !== base;
+  return { ctrl: best, changed, cells: bestCells, nCrit: bestCells.filter(x => x.st === 2).length, nWarn: bestCells.filter(x => x.st === 1).length };
+}
+if (typeof module !== 'undefined') Object.assign(module.exports, { preventiveHour });
+
+// --- Суточный график местной генерации с ограничением скорости набора/сброса мощности ---
+function rampSchedule(req) {
+  // req[h] = {G2, G3} требуемые значения (или null — базовая загрузка). Возвращает выполнимый график.
+  const base = defaultCtrl().gP, out = {};
+  ['G2', 'G3'].forEach(id => {
+    const ramp = GENS.find(g => g.id === id).ramp;
+    const tgt = req.map(r => r ? r[id] : base[id]);
+    const S = tgt.slice();
+    const fixed = req.map(r => !!r);
+    // заранее набираем мощность перед опасными часами и плавно снижаем после них
+    for (let it = 0; it < 3; it++) {
+      for (let h = 22; h >= 0; h--) if (!fixed[h]) { if (S[h] < S[h + 1] - ramp) S[h] = S[h + 1] - ramp; if (S[h] > S[h + 1] + ramp) S[h] = S[h + 1] + ramp; }
+      for (let h = 1; h < 24; h++) if (!fixed[h]) { if (S[h] < S[h - 1] - ramp) S[h] = S[h - 1] - ramp; if (S[h] > S[h - 1] + ramp) S[h] = S[h - 1] + ramp; }
+    }
+    out[id] = S;
+  });
+  let feasible = true;
+  ['G2', 'G3'].forEach(id => { const ramp = GENS.find(g => g.id === id).ramp; for (let h = 1; h < 24; h++) if (Math.abs(out[id][h] - out[id][h - 1]) > ramp + 1e-9) feasible = false; });
+  return { ...out, feasible };
+}
+if (typeof module !== 'undefined') Object.assign(module.exports, { rampSchedule, typicalPreset, MONTH_NAMES });
+
+</script>
+<script>
+const $=s=>document.querySelector(s);
+const C={good:'#0ca30c',warn:'#fab219',serious:'#ec835a',crit:'#d03b3b',ink:'#f3f2ee',ink2:'#bcbab2',ink3:'#8a8880',grid:'#2c2c2a',axis:'#383835',accent:'#3d8bfd',okcell:'#24402a'};
+const FS=innerWidth<600?1.3:1;
+const NS='http://www.w3.org/2000/svg';
+function el(tag,a,p,txt){const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,k==='font-size'?(a[k]*FS).toFixed(1):a[k]);if(txt!==undefined)e.textContent=txt;if(p)p.appendChild(e);return e;}
+const tip=$('#tip');
+function showTip(e,h){tip.innerHTML=h;tip.style.display='block';tip.style.left=Math.min(e.clientX+12,innerWidth-260)+'px';tip.style.top=(e.clientY+12)+'px';}
+function hideTip(){tip.style.display='none';}
+function bindTip(g,fn){g.addEventListener('mousemove',e=>showTip(e,fn()));g.addEventListener('mouseleave',hideTip);}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const hh=h=>String(h).padStart(2,'0')+':00';
+const sgn=t=>(t>0?'+':'')+Math.round(t);
+
+const TOM=new Date(Date.now()+864e5);const TOM_M=TOM.getMonth()+1;const TOM_LABEL=`${TOM.getDate()} ${MONTH_NAMES[TOM_M-1]}`;
+WEATHER_PRESETS.tomorrow={...typicalPreset(TOM_M),name:`Завтра, ${TOM_LABEL}: типичный день`};
+const S={preset:'tomorrow',p:{...WEATHER_PRESETS.tomorrow},weekend:false,mode:'dlr',band:'p90',view:'before',line:'L1',sel:null};
+let M=null; // модели
+let D=null; // результаты расчёта
+let run=0;
+
+// ---------- погода: элементы управления ----------
+function buildPresets(){
+  const box=$('#presets');box.innerHTML='';
+  const order=['tomorrow','summer','heat','heatwind','autumn','frost'];
+  order.forEach(k=>{const v=WEATHER_PRESETS[k];if(k==='autumn'&&TOM_M===11)return;if(k==='summer'){const sp=document.createElement('span');sp.className='note';sp.textContent='Исследовательские сценарии:';box.appendChild(sp);}const b=document.createElement('button');b.className='chip'+(S.preset===k?' on':'');b.textContent=v.name;b.onclick=()=>{S.preset=k;S.p={...v};S.sel=null;syncCtl();buildPresets();recalc();};box.appendChild(b);});
+}
+const ctlMap=[['pTmax','Tmax',v=>sgn(v)+' °C'],['pTmin','Tmin',v=>sgn(v)+' °C'],['pWd','windDay',v=>v+' м/с'],['pWn','windNight',v=>v+' м/с'],['pCl','cloud',v=>Math.round(v*100)+'%']];
+function syncCtl(){ctlMap.forEach(([id,k,f])=>{$('#'+id).value=S.p[k];$('#v'+id.slice(1)).textContent=f(S.p[k]);});$('#pWe').checked=S.weekend;}
+let tmr;
+ctlMap.forEach(([id,k,f])=>{$('#'+id).oninput=e=>{S.p[k]=+e.target.value;if(k==='Tmax'&&S.p.Tmin>S.p.Tmax-2){S.p.Tmin=S.p.Tmax-2;}if(k==='Tmin'&&S.p.Tmax<S.p.Tmin+2){S.p.Tmax=S.p.Tmin+2;}S.preset=null;buildPresets();syncCtl();clearTimeout(tmr);tmr=setTimeout(recalc,250);};});
+$('#pWe').onchange=e=>{S.weekend=e.target.checked;recalc();};
+function bindTabs(id,key,cb){document.querySelectorAll(`#${id} button`).forEach(b=>b.onclick=()=>{S[key]=b.dataset.v;document.querySelectorAll(`#${id} button`).forEach(x=>x.classList.toggle('on',x===b));cb();});}
+bindTabs('tMode','mode',()=>recalc());
+bindTabs('tBand','band',()=>recalc());
+bindTabs('tView','view',()=>{renderHeat();renderDetail();});
+
+// ---------- обучение моделей ----------
+async function trainModels(){
+  const H=makeHistory();
+  const tr=H.filter(r=>r.d<365),te=H.filter(r=>r.d>=365);
+  const lin=fitLinear(tr);
+  const g=trainLoadModel(tr,6,16);let x;
+  while(!(x=g.next()).done){$('#mlProg').style.width=(x.value.epoch/x.value.epochs*100)+'%';$('#badge').textContent=`Обучение нейросети: эпоха ${x.value.epoch}/${x.value.epochs}`;await wait(0);}
+  const mlp=x.value;
+  const mM=metrics(mlp,te),mL=metrics(lin,te),hM=hotMetrics(mlp,te),hL=hotMetrics(lin,te);
+  const Tmax=Math.max(...tr.map(r=>r.T));
+  const nHot=te.filter(r=>r.T>=35).length;
+  // интервал неопределённости зависит от температуры: в жару ошибка больше
+  // калибровка интервала на отдельной выборке (нечётные недели 2-го года), проверка покрытия — на чётных неделях
+  const cal=te.filter(r=>Math.floor((r.d-365)/7)%2===1), tst=te.filter(r=>Math.floor((r.d-365)/7)%2===0);
+  const bands=[[-99,35],[35,40],[40,99]].map(([lo,hi])=>{
+    const res=cal.filter(r=>r.T>=lo&&r.T<hi).map(r=>r.load-mlp.predict(r)).sort((a,b)=>a-b);const q=f=>res[Math.floor(f*(res.length-1))];
+    const q10=q(0.1),q90=q(0.9);const rows=tst.filter(r=>r.T>=lo&&r.T<hi);
+    const cov=rows.filter(r=>{const e=r.load-mlp.predict(r);return e>=q10&&e<=q90;}).length/rows.length;
+    return {lo,hi,q10,q90,ncal:res.length,ntest:rows.length,cov};});
+  M={mlp,lin,mM,mL,hM,hL,Tmax,ntr:tr.length,nte:te.length,nHot,bands};
+  $('#badge').textContent=`Модель нагрузки: ошибка ${mM.mape.toFixed(1)}% (MAPE)`;
+  $('#mlBox').innerHTML=`
+   <table class="t"><tr><th></th><th style="text-align:right">Нейросеть</th><th style="text-align:right">Линейная</th></tr>
+   <tr><td>MAPE, все часы</td><td class="n">${mM.mape.toFixed(1)}%</td><td class="n">${mL.mape.toFixed(1)}%</td></tr>
+   <tr><td>MAPE, жаркие часы (≥35 °C)</td><td class="n"><b>${hM.mape.toFixed(1)}%</b></td><td class="n">${hL.mape.toFixed(1)}%</td></tr>
+   <tr><td>MAE, МВт</td><td class="n">${mM.mae.toFixed(1)}</td><td class="n">${mL.mae.toFixed(1)}</td></tr>
+   <tr><td>Ошибка P90 (запас), МВт</td><td class="n">+${mM.q90.toFixed(1)}</td><td class="n">+${mL.q90.toFixed(1)}</td></tr></table>
+   <h3>Калибровка интервала P10–P90</h3>
+   <table class="t"><tr><th>Температура</th><th style="text-align:right">Интервал, МВт</th><th style="text-align:right">Покрытие (цель 80%)</th><th style="text-align:right">n</th></tr>
+   ${bands.map(b=>`<tr><td>${b.lo<-50?'&lt; '+b.hi:b.hi>90?'≥ '+b.lo:b.lo+'–'+b.hi} °C</td><td class="n">${b.q10.toFixed(1)}…+${b.q90.toFixed(1)}</td><td class="n" style="color:${Math.abs(b.cov-0.8)>0.04?'var(--warn)':'inherit'}">${(b.cov*100).toFixed(0)}%</td><td class="n">${b.ntest}</td></tr>`).join('')}</table>
+   <p class="note" style="margin-top:6px">Интервал подобран на одних неделях 2-го года, а покрытие проверено на других, не участвовавших ни в обучении, ни в калибровке. При ≥40 °C данных мало (${bands[2].ncal} ч), и интервал занижен — это видно по покрытию.</p>
+   <p class="note" style="margin-top:8px">Обучение: ${M.ntr} часов (год 1), проверка: ${M.nte} часов (год 2), из них ${nHot} жарких. История синтетическая, поэтому эти числа показывают работоспособность метода, а не точность прогноза реальной нагрузки. Нейросеть: 8 признаков (час, выходной, температура сейчас, средняя за 3 ч, максимум дня) → 16 нейронов → нагрузка.
+   Главная польза ML здесь — в жару: линейная модель не видит, что кондиционеры включаются нелинейно и с запаздыванием, и ошибается в ${(hL.mape/hM.mape).toFixed(0)} раз сильнее.
+   Самая высокая температура в обучающей истории: ${sgn(Tmax)} °C, выше неё прогноз — экстраполяция.</p>`;
+}
+
+// ---------- основной расчёт ----------
+async function recalc(){
+  if(!M) return;
+  const id=++run;
+  const weather=dayWeather(S.p);
+  const fc=forecastDay(weather,M.mlp,S.weekend,0).map(f=>{const bd=M.bands.find(x=>f.T>=x.lo&&f.T<x.hi);const extra=Math.max(0,f.T-M.Tmax)*3;return {...f,p10:f.p50+bd.q10,p90:f.p50+bd.q90+extra,lin:M.lin.predict({h:f.h,T:f.T,Tlag:f.Tlag,weekend:S.weekend})};});
+  const useP90=S.band==='p90';
+  const A=analyzeDay(fc,S.mode,useP90);
+  const Aother=analyzeDay(fc,S.mode==='dlr'?'static':'dlr',useP90);
+  D={weather,fc,A,Aother,P:{},corr:{},done:false};
+  if(!S.sel||S.sel.h===undefined){ const w=worstCell(A); S.sel=w; }
+  renderWeather();renderLoad();renderRating();renderHeat();renderHero();renderDetail();
+  // превентивные меры по опасным часам
+  const hours=A.filter(a=>a.nCrit||a.nWarn);
+  for(let k=0;k<hours.length;k++){
+    if(id!==run) return;
+    const a=hours[k];
+    D.P[a.w.h]=preventiveHour(a);
+    $('#prevProg').style.width=((k+1)/hours.length*100)+'%';
+    if(k%2===1) { renderHero(); if(S.view==='after') renderHeat(); }
+    await wait(0);
+  }
+  // график местной генерации с ограничением скорости набора мощности
+  if(id!==run) return;
+  const req=D.A.map(a=>D.P[a.w.h]&&D.P[a.w.h].changed?D.P[a.w.h].ctrl.gP:null);
+  if(req.some(Boolean)){
+    const sch=rampSchedule(req); D.sched=sch;
+    for(let h=0;h<24;h++){
+      const want={G2:sch.G2[h],G3:sch.G3[h]};
+      const cur=D.P[h]?D.P[h].ctrl:defaultCtrl();
+      if(cur.gP.G2===want.G2&&cur.gP.G3===want.G3) continue;
+      const ctrl={...cloneCtrl(cur),gP:want};
+      const cells=evalHour(D.A[h],ctrl,CONTINGENCIES);
+      D.P[h]={ctrl,changed:true,ramp:true,cells,nCrit:cells.filter(x=>x.st===2).length,nWarn:cells.filter(x=>x.st===1).length};
+      await wait(0);
+    }
+  } else D.sched=null;
+  // остаточный риск: корректирующие меры для худшего часа
+  const peak=peakHour();
+  if(peak!==null && D.P[peak] && D.P[peak].nCrit){
+    const a=A[peak];
+    for(const x of D.P[peak].cells.filter(c=>c.st===2)){
+      if(id!==run) return;
+      const o=optimize({T:a.w.T,load:a.load,linesOut:x.c.linesOut,gensOut:x.c.gensOut,ratingA:a.ratingA,ctrl:D.P[peak].ctrl},40);
+      D.corr[peak+'_'+x.c.id]=o; await wait(0);
+    }
+  }
+  D.done=true;
+  $('#prevProg').style.width='100%';
+  renderHero();renderHeat();renderDetail();
+}
+function worstCell(A){
+  let best=null,bv=-1;
+  A.forEach(a=>a.cells.forEach(x=>{ if(x.c.id==='base')return; const v=x.st*10+Math.min(5,x.maxL); if(v>bv){bv=v;best={h:a.w.h,cid:x.c.id};} }));
+  return best||{h:15,cid:'L1'};
+}
+function peakHour(){ let p=null,v=0; D.A.forEach(a=>{const s=a.nCrit*100+a.nWarn; if(s>v){v=s;p=a.w.h;}}); return p; }
+function rowFor(h){ const a=D.A[h]; if(S.view==='after'&&D.P[h]) return {cells:D.P[h].cells,ctrl:D.P[h].ctrl,nCrit:D.P[h].nCrit,nWarn:D.P[h].nWarn}; return {cells:a.cells,ctrl:defaultCtrl(),nCrit:a.nCrit,nWarn:a.nWarn}; }
+
+// ---------- графики погоды ----------
+function lineChart(svg,{W,H,L=34,R=10,T=10,B=22,xs,series,ymin,ymax,yticks,yfmt=v=>v,bands=[],bars=null,xlab=true,tipFn}){
+  svg.innerHTML='';svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const pw=W-L-R,ph=H-T-B;const x=i=>L+pw*(i+.5)/xs.length;const y=v=>T+ph-(v-ymin)/(ymax-ymin)*ph;
+  yticks.forEach(t=>{el('line',{x1:L,x2:W-R,y1:y(t),y2:y(t),stroke:C.grid},svg);el('text',{x:L-5,y:y(t)+3,'text-anchor':'end','font-size':9,fill:C.ink3,'font-family':'IBM Plex Mono'},svg,yfmt(t));});
+  if(xlab) xs.forEach((h,i)=>{if(i%3===0)el('text',{x:x(i),y:H-6,'text-anchor':'middle','font-size':9,fill:C.ink3,'font-family':'IBM Plex Mono'},svg,String(h).padStart(2,'0'));});
+  el('line',{x1:L,x2:W-R,y1:T+ph,y2:T+ph,stroke:C.axis},svg);
+  bands.forEach(b=>{const d=b.lo.map((v,i)=>(i?'L':'M')+x(i)+','+y(v)).join('')+b.hi.map((v,i)=>'L'+x(b.hi.length-1-i)+','+y(b.hi[b.hi.length-1-i])).join('')+'Z';el('path',{d,fill:b.fill},svg);});
+  if(bars){const bw=pw/xs.length-3;bars.v.forEach((v,i)=>{const yy=y(Math.max(ymin,v)),y0=y(ymin);el('rect',{x:x(i)-bw/2,y:yy,width:bw,height:Math.max(0,y0-yy),rx:2,fill:bars.c},svg);});}
+  series.forEach(s=>{
+    if(s.dots){s.v.forEach((v,i)=>el('circle',{cx:x(i),cy:y(v),r:2.4,fill:s.c},svg));return;}
+    el('path',{d:s.v.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+','+y(Math.max(ymin,Math.min(ymax,v))).toFixed(1)).join(''),fill:'none',stroke:s.c,'stroke-width':s.w||2,'stroke-dasharray':s.dash||'','stroke-linejoin':'round'},svg);
+  });
+  if(tipFn){const ov=el('rect',{x:L,y:T,width:pw,height:ph,fill:'transparent'},svg);const cr=el('line',{y1:T,y2:T+ph,stroke:C.ink3,opacity:0},svg);
+    const mv=e=>{const b=svg.getBoundingClientRect();const vx=(e.clientX-b.left)/b.width*W;const i=Math.max(0,Math.min(xs.length-1,Math.floor((vx-L)/pw*xs.length)));cr.setAttribute('x1',x(i));cr.setAttribute('x2',x(i));cr.setAttribute('opacity',1);showTip(e,tipFn(i));};
+    ov.addEventListener('mousemove',mv);ov.addEventListener('click',mv);ov.addEventListener('mouseleave',()=>{hideTip();cr.setAttribute('opacity',0);});}
+  return {x,y};
+}
+function niceRange(vals,step){const lo=Math.floor(Math.min(...vals)/step)*step,hi=Math.ceil(Math.max(...vals)/step)*step;const t=[];for(let v=lo;v<=hi+1e-9;v+=step)t.push(v);return {lo,hi,t};}
+function renderWeather(){
+  const w=D.weather,xs=w.map(x=>x.h);
+  const r=niceRange(w.map(x=>x.T),5);
+  el('text',{},null);
+  const g=lineChart($('#wchart'),{W:420,H:150,xs,series:[{v:w.map(x=>x.T),c:C.serious}],ymin:r.lo,ymax:r.hi,yticks:r.t,yfmt:v=>v+'°',tipFn:i=>`<b>${hh(i)}</b><br>T <span class="m">${w[i].T.toFixed(1)} °C</span><br>Ветер <span class="m">${w[i].wind.toFixed(1)} м/с</span><br>Солнце <span class="m">${w[i].solar.toFixed(0)} Вт/м²</span>`});
+  el('text',{x:36,y:9,'font-size':9.5,fill:C.ink2},$('#wchart'),'Температура воздуха, °C');
+  const wm=Math.max(4,Math.ceil(Math.max(...w.map(x=>x.wind))/2)*2);
+  lineChart($('#windchart'),{W:420,H:110,xs,series:[],bars:{v:w.map(x=>x.wind),c:'#5b8fd9'},ymin:0,ymax:wm,yticks:[0,wm/2,wm],tipFn:i=>`<b>${hh(i)}</b><br>Ветер <span class="m">${w[i].wind.toFixed(1)} м/с</span>`});
+  el('text',{x:36,y:9,'font-size':9.5,fill:C.ink2},$('#windchart'),'Ветер, м/с (охлаждает провода)');
+}
+function renderLoad(){
+  const f=D.fc,xs=f.map(x=>x.h);
+  const all=[...f.map(x=>x.p90),...f.map(x=>x.p10),...f.map(x=>x.lin),...f.map(x=>x.truth)];
+  const r=niceRange(all,20);
+  lineChart($('#lchart'),{W:420,H:220,L:36,xs,bands:[{lo:f.map(x=>x.p10),hi:f.map(x=>x.p90),fill:'rgba(61,139,253,.22)'}],
+    series:[{v:f.map(x=>x.lin),c:C.ink3,dash:'4 3',w:1.5},{v:f.map(x=>x.p50),c:C.accent},{v:f.map(x=>x.truth),c:C.ink,dots:true}],
+    ymin:r.lo,ymax:r.hi,yticks:r.t,
+    tipFn:i=>`<b>${hh(i)}</b> · ${f[i].T.toFixed(1)} °C<br>Нейросеть P50: <span class="m">${f[i].p50.toFixed(1)} МВт</span><br>P10–P90: <span class="m">${f[i].p10.toFixed(0)}–${f[i].p90.toFixed(0)}</span><br>Линейная: <span class="m">${f[i].lin.toFixed(1)}</span><br>Эталон: <span class="m">${f[i].truth.toFixed(1)}</span>`});
+  const Tm=Math.max(...D.weather.map(w=>w.T));
+  $('#domainWarn').textContent = Tm>M.Tmax ? `▲ Температура ${sgn(Tm)} °C выше максимума в обучающей истории (${sgn(M.Tmax)} °C): нейросеть экстраполирует, прогноз ненадёжен. Используйте P90 и расширьте историю.` : '';
+}
+function renderRating(){
+  const box=$('#lineSel');box.innerHTML='';
+  LINES.forEach(l=>{const b=document.createElement('button');b.className='chip'+(S.line===l.id?' on':'');b.textContent=l.id;b.title=l.name;b.onclick=()=>{S.line=l.id;renderRating();};box.appendChild(b);});
+  const l=LINES.find(x=>x.id===S.line);
+  const st=D.weather.map(w=>staticAmp(l,w.T)),dl=D.weather.map(w=>dlrAmp(l.c,w.T,w.wind,w.solar));
+  const worst=D.A.map(a=>Math.max(0,...a.cells.filter(x=>x.r.converged&&x.r.flows[l.id]&&!x.r.flows[l.id].out).map(x=>x.r.flows[l.id].I)));
+  const r=niceRange([...st,...dl,...worst,0],100);
+  lineChart($('#rchart'),{W:420,H:200,L:38,xs:D.weather.map(w=>w.h),series:[{v:st,c:C.ink2,dash:'5 4',w:1.5},{v:dl,c:C.accent},{v:worst,c:C.serious}],ymin:0,ymax:r.hi,yticks:r.t,
+    tipFn:i=>`<b>${l.id} ${l.name}</b> · ${hh(i)}<br>Справочный: <span class="m">${st[i].toFixed(0)} А</span><br>DLR: <span class="m">${dl[i].toFixed(0)} А</span><br>Худший N-1: <span class="m">${worst[i].toFixed(0)} А</span>`});
+  el('text',{x:40,y:9,'font-size':9.5,fill:C.ink2},$('#rchart'),'Ток, А');
+  const lo=dl.map((v,i)=>v/st[i]),mn=Math.min(...lo),mx=Math.max(...lo);
+  $('#rnote').textContent=`${l.name}, ${l.c}. DLR составляет от ${(mn*100).toFixed(0)}% до ${(mx*100).toFixed(0)}% справочного значения. `+(mn<0.97?'В штиль под солнцем реальный предел ниже справочного — справочник здесь скрывает риск. ':'')+(mx>1.1?'При ветре провод охлаждается лучше, и справочник занижает пропускную способность.':'');
+}
+
+// ---------- тепловая карта ----------
+function renderHeat(){
+  const svg=$('#heat');svg.innerHTML='';
+  const L=150*(innerWidth<600?0.55:1),cw=12.5,chh=16,T=18;
+  const W=L+24*cw+6,H=T+CONTINGENCIES.length*chh+6;svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  for(let h=0;h<24;h+=3) el('text',{x:L+h*cw+cw/2,y:12,'text-anchor':'middle','font-size':8,fill:C.ink3,'font-family':'IBM Plex Mono'},svg,String(h).padStart(2,'0'));
+  CONTINGENCIES.forEach((c,ri)=>{
+    const lbl=innerWidth<600?c.id==='base'?'норма':c.id:c.label.length>26?c.label.slice(0,25)+'…':c.label;
+    el('text',{x:L-5,y:T+ri*chh+chh/2+3,'text-anchor':'end','font-size':8.5,fill:c.id==='base'?C.ink:C.ink2,'font-weight':c.id==='base'?600:400},svg,lbl);
+    for(let h=0;h<24;h++){
+      const row=rowFor(h);const x=row.cells[ri];
+      const col=x.st===3?'#55534e':x.st===2?C.crit:x.st===1?C.warn:C.okcell;
+      const sel=S.sel&&S.sel.h===h&&S.sel.cid===c.id;
+      const g=el('g',{style:'cursor:pointer'},svg);
+      el('rect',{x:L+h*cw+1,y:T+ri*chh+1,width:cw-2,height:chh-2,rx:2.5,fill:col,stroke:sel?C.ink:'none','stroke-width':sel?1.6:0},g);
+      if(x.st===3) el('text',{x:L+h*cw+cw/2,y:T+ri*chh+chh/2+3,'text-anchor':'middle','font-size':8,fill:'#fff','font-weight':700},g,'?');
+      if(x.st===2) el('text',{x:L+h*cw+cw/2,y:T+ri*chh+chh/2+3,'text-anchor':'middle','font-size':8,fill:'#fff','font-weight':700},g,'✕');
+      bindTip(g,()=>{const r=x.r;let s=`<b>${hh(h)} · ${c.label}</b><br>`;if(r.status==='pv_limit')return s+`<span style="color:#ff9a9a">предел передаваемой мощности: режим существует до ${(r.lambdaMax*100).toFixed(0)}% нагрузки</span>`;if(r.unknown)return s+'расчёт не сошёлся — не определено';s+=`Макс. загрузка: <span class="m">${(r.maxLoading*100).toFixed(0)}%</span><br>Мин. U: <span class="m">${(r.minV*100).toFixed(1)}%</span>`;if(r.reasons.length)s+='<br>'+r.reasons[0];return s;});
+      g.addEventListener('click',()=>{S.sel={h,cid:c.id};renderHeat();renderDetail();if(innerWidth<900)$('#detail').scrollIntoView({behavior:'smooth'});});
+    }
+  });
+  // итог по часам
+}
+
+// ---------- итоговая карточка ----------
+function groupHours(hs){const out=[];hs.forEach(h=>{const l=out[out.length-1];if(l&&l[1]===h-1)l[1]=h;else out.push([h,h]);});return out.map(([a,b])=>a===b?hh(a):`${hh(a)}–${String(b+1).padStart(2,'0')}:00`).join(', ');}
+function renderHero(){
+  const A=D.A;const crit=A.filter(a=>a.nCrit).map(a=>a.w.h),warn=A.filter(a=>!a.nCrit&&a.nWarn).map(a=>a.w.h);
+  let lvl=crit.length?2:warn.length?1:0;
+  const dang=A.filter(a=>a.nCrit||a.nWarn).map(a=>a.w.h);
+  const prevDone=dang.length&&dang.every(h=>D.P[h]);
+  const fixable=lvl===2&&prevDone&&dang.every(h=>D.P[h].nCrit===0);
+  if(fixable) lvl=1;
+  const totalCrit=A.reduce((s,a)=>s+a.nCrit,0);
+  const nUnk=A.reduce((s,a)=>s+a.cells.filter(x=>x.st===3).length,0);
+  const baseCrit=A.filter(a=>a.cells[0].st===2).map(a=>a.w.h);
+  const peakL=Math.max(...D.fc.map(f=>f.p50)),peakL90=Math.max(...D.fc.map(f=>f.p90)),peakH=D.fc.findIndex(f=>f.p50===peakL);
+  // худший случай
+  let worst=null;A.forEach(a=>a.cells.forEach(x=>{if(x.c.id==='base'&&!baseCrit.length)return;const v=x.r.converged?x.r.maxLoading:99;if(x.st===2&&(!worst||v>worst.v))worst={v,h:a.w.h,x};}));
+  // сравнение режимов допустимого тока
+  let hidden=0,falseAl=0;A.forEach((a,h)=>a.cells.forEach((x,i)=>{const o=D.Aother[h].cells[i];const dl=S.mode==='dlr'?x:o,st=S.mode==='dlr'?o:x;if(dl.st===2&&st.st<2)hidden++;if(st.st===2&&dl.st<2)falseAl++;}));
+  const title=fixable?'риск есть, устраняется заранее':['Низкий риск','Повышенный риск','Высокий риск'][lvl];
+  const icon=['✓','▲','!'][lvl];
+  let h=`<div class="top"><div class="ic">${icon}</div><div><div class="t">Завтра: ${title}</div><div class="d">${WEATHER_PRESETS[S.preset]?.name||'Свой сценарий'} · ${sgn(S.p.Tmin)}…${sgn(S.p.Tmax)} °C · расчёт по ${S.band.toUpperCase()} нагрузки, ${S.mode==='dlr'?'динамический допустимый ток':'справочный допустимый ток'}</div></div></div>`;
+  h+=`<div class="kpis">
+    <div class="kpi"><div class="k">Опасные часы (N-1)</div><div class="n">${crit.length}<small> ч</small></div><div class="s">${crit.length?groupHours(crit):'нет'}</div></div>
+    <div class="kpi"><div class="k">Опасных ситуаций за сутки</div><div class="n">${totalCrit}</div><div class="s">из ${24*CONTINGENCIES.length} проверенных${nUnk?` · не определено: ${nUnk}`:''}</div></div>
+    <div class="kpi"><div class="k">Пик нагрузки (P50 / P90)</div><div class="n">${peakL.toFixed(0)}<small> / ${peakL90.toFixed(0)} МВт</small></div><div class="s">в ${hh(peakH)}</div></div>
+    <div class="kpi"><div class="k">Нормальная схема</div><div class="n">${baseCrit.length?'<span style="color:#ff9a9a">наруш.</span>':'ОК'}</div><div class="s">${baseCrit.length?'нарушения без отказов: '+groupHours(baseCrit):'без отказов режим допустим'}</div></div>
+  </div>`;
+  let rec='';
+  if(worst){const x=worst.x;rec+=`<p><b>Самый опасный сценарий:</b> отказ ${x.c.label} в ${hh(worst.h)}. ${x.r.reasons[0]||''}</p>`;}
+  const dangerous=A.filter(a=>a.nCrit||a.nWarn).map(a=>a.w.h);
+  const prevH=dangerous.filter(h=>D.P[h]);
+  if(lvl>0){
+    if(prevH.length<dangerous.length) rec+=`<p class="note">Подбор превентивных мер: ${prevH.length}/${dangerous.length} ч…</p>`;
+    else {
+      const ch=prevH.filter(h=>D.P[h].changed);
+      if(ch.length){
+        const g2=Math.max(...ch.map(h=>D.P[h].ctrl.gP.G2)),g3=Math.max(...ch.map(h=>D.P[h].ctrl.gP.G3)),vu=ch.some(h=>D.P[h].ctrl.vset.G2>1.02);
+        const after=prevH.reduce((s,h)=>s+D.P[h].nCrit,0),before=prevH.reduce((s,h)=>s+D.A[h].nCrit,0);
+        const chAll=D.A.map(a=>a.w.h).filter(h=>D.P[h]&&D.P[h].changed);
+        rec+=`<p><b>Рекомендация на ${groupHours(chAll)}:</b> заранее загрузить ГТЭС Жанаозен до ${g2} МВт и ГТУ Жетыбай до ${g3} МВт${vu?', поднять уставки напряжения генераторов до 105%':''} (почасовой график — в карте риска, режим «С превентивными мерами»). Это разгружает транзит от МАЭК: опасных ситуаций <b>${before} → ${after}</b>.${D.sched&&D.A.some(a=>D.P[a.w.h]&&D.P[a.w.h].ramp)?' Набор мощности начинается заранее с учётом скорости набора (G2 ≤ 20 МВт/ч, G3 ≤ 12 МВт/ч — условные значения).':''}</p><svg id="schedChart" viewBox="0 0 420 120" style="width:100%;max-width:560px;display:block;margin-top:4px"></svg><div class="legend" style="margin-top:0"><span><i style="background:var(--accent)"></i>G2 ГТЭС Жанаозен, МВт</span><span><i style="background:#c98bf0"></i>G3 ГТУ Жетыбай, МВт</span><span><i class="dash" style="color:var(--ink3)"></i>базовый график</span></div>`;
+        if(after>0){
+          const pk=peakHour();const cs=Object.entries(D.corr).filter(([k])=>k.startsWith(pk+'_'));
+          if(cs.length){const shed=Math.max(...cs.map(([k,o])=>o.result.shedMW));const unsolved=cs.filter(([k,o])=>o.result.critical).length;
+            rec+=`<p><b>Остаточный риск:</b> в ${hh(pk)} отказов, которые всё равно приведут к нарушениям: ${cs.length}. Понадобятся оперативные действия после отказа${shed>0?`, вплоть до ограничения потребителей на ~${shed.toFixed(0)} МВт`:''}${unsolved?`; в ${unsolved} случ. доступных мер недостаточно`:''}. Заранее подготовьте графики ограничения и проверьте готовность БСК.</p>`;}
+          else rec+=`<p class="note">Расчёт корректирующих действий…</p>`;
+        }
+      } else rec+=`<p><b>Рекомендация:</b> перераспределение генерации не помогает — нужны оперативные действия (см. детали сценария).</p>`;
+    }
+  } else rec+=`<p><b>Рекомендация:</b> специальных мер не требуется — при отказе любого одного элемента режим остаётся допустимым.</p>`;
+  rec+=`<p class="note" style="margin-top:6px">Сравнение ${S.mode==='dlr'?'со справочным':'с динамическим'} допустимым током: DLR находит <b style="color:var(--ink)">${hidden}</b> опасных ситуаций, которые справочный ток пропускает, и снимает <b style="color:var(--ink)">${falseAl}</b> ложных тревог.</p>`;
+  h+=`<div class="rec">${rec}</div>`;
+  const hero=$('#hero');hero.className='hero lvl'+lvl;hero.innerHTML=h;
+  if($('#schedChart')){const g2=D.A.map(a=>D.P[a.w.h]?D.P[a.w.h].ctrl.gP.G2:35),g3=D.A.map(a=>D.P[a.w.h]?D.P[a.w.h].ctrl.gP.G3:15);
+    lineChart($('#schedChart'),{W:420,H:120,xs:D.A.map(a=>a.w.h),series:[{v:new Array(24).fill(35),c:C.ink3,dash:'3 3',w:1},{v:new Array(24).fill(15),c:C.ink3,dash:'3 3',w:1},{v:g2,c:C.accent},{v:g3,c:'#c98bf0'}],ymin:0,ymax:60,yticks:[0,20,40,60],tipFn:i=>`<b>${hh(i)}</b><br>G2: <span class="m">${g2[i]} МВт</span><br>G3: <span class="m">${g3[i]} МВт</span>`});}
+}
+
+// ---------- детали клетки + схема ----------
+const LBL_T={L4:0.62,L2:0.6,L1:0.42,L3:0.55,L8:0.5};
+const BUS_LBL={1:'b',2:'l',3:'b',4:'r',5:'t',6:'l',7:'r',8:'l'};
+const loadColor=l=>l>1?C.crit:l>0.9?C.warn:C.good;
+const vColor=v=>(v<0.9||v>1.1)?C.crit:(v<0.95||v>1.05)?C.warn:C.good;
+function renderMap(r){
+  const svg=$('#map');svg.innerHTML='';
+  el('path',{d:'M0,0 L30,0 C35,40 20,70 30,100 C40,130 10,160 15,200 C18,230 5,260 10,300 L0,300 Z',fill:'#16222e'},svg);
+  const B=id=>BUSES[id-1];
+  LINES.forEach(l=>{
+    const a=B(l.f),b=B(l.t),f=r.flows&&r.flows[l.id];const out=r.scn.linesOut.includes(l.id);
+    const col=out||!f?C.ink3:loadColor(f.loading);const w=out?1.5:2+Math.min(4,(f?f.loading:0)*3);
+    const g=el('g',{},svg);
+    el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'transparent','stroke-width':14},g);
+    el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:col,'stroke-width':w,'stroke-linecap':'round','stroke-dasharray':out?'4 4':'',opacity:out?.6:1},g);
+    const t=LBL_T[l.id]??.5,mx=a.x+(b.x-a.x)*t,my=a.y+(b.y-a.y)*t;
+    el('rect',{x:mx-11,y:my-7,width:22,height:13,rx:4,fill:'#121211',stroke:col},g);
+    el('text',{x:mx,y:my+3,'text-anchor':'middle','font-size':8.5,fill:C.ink2},g,l.id);
+    bindTip(g,()=>out||!f?`<b>${l.id} · ${l.name}</b><br>отключена`:`<b>${l.id} · ${l.name}</b><br>P <span class="m">${f.P.toFixed(1)} МВт</span><br>I <span class="m">${f.I.toFixed(0)} / ${f.Imax.toFixed(0)} А (${(f.loading*100).toFixed(0)}%)</span>`);
+  });
+  BUSES.forEach(b=>{
+    const dead=!r.live.includes(b.id),v=r.V?r.V[b.id]:null;const col=dead||!v?C.ink3:vColor(v);
+    const g=el('g',{},svg);
+    if(GENS.find(x=>x.bus===b.id)) el('circle',{cx:b.x,cy:b.y,r:11,fill:'none',stroke:C.accent,'stroke-width':2},g);
+    el('circle',{cx:b.x,cy:b.y,r:7,fill:col,stroke:'#121211','stroke-width':2},g);
+    const pos=BUS_LBL[b.id];const lx=pos==='r'?b.x+14:pos==='l'?b.x-14:b.x,ly=pos==='b'?b.y+20:pos==='t'?b.y-24:b.y-6,an=pos==='r'?'start':pos==='l'?'end':'middle';
+    el('text',{x:lx,y:ly,'text-anchor':an,'font-size':10,fill:C.ink,'font-weight':600},g,b.short);
+    el('text',{x:lx,y:ly+11*FS,'text-anchor':an,'font-size':9,fill:C.ink3,'font-family':'IBM Plex Mono'},g,v?(v*KV).toFixed(1)+' кВ':'—');
+    bindTip(g,()=>{let s=`<b>${b.name}</b>`;if(v)s+=`<br>U <span class="m">${(v*KV).toFixed(1)} кВ (${(v*100).toFixed(1)}%)</span><br>Нагрузка <span class="m">${r.loadBus[b.id].P.toFixed(1)} МВт</span>`;GENS.filter(x=>x.bus===b.id).forEach(gg=>{const q=r.gen&&r.gen[gg.id];s+=`<br>${gg.id}: ${q&&!q.out?q.P.toFixed(1)+' МВт':'отключён'}`;});return s;});
+  });
+  if(r.status==='pv_limit') el('text',{x:220,y:290,'text-anchor':'middle','font-size':10,fill:C.crit,'font-weight':600},svg,`Показан режим у предела (${(r.lambdaMax*100).toFixed(0)}% нагрузки)`);
+  if(r.unknown) el('text',{x:220,y:290,'text-anchor':'middle','font-size':10,fill:C.ink3,'font-weight':600},svg,'Расчёт не сошёлся — не определено');
+}
+function renderDetail(){
+  if(!S.sel){return;}
+  const {h,cid}=S.sel;const a=D.A[h];const row=rowFor(h);const ri=CONTINGENCIES.findIndex(c=>c.id===cid);const x=row.cells[ri];const r=x.r;
+  renderMap(r);
+  const w=a.w;const ctrl=row.ctrl;
+  let t=`<h3 style="margin-top:0">${hh(h)} · ${x.c.id==='base'?'нормальная схема':'отказ '+x.c.label}</h3>
+   <div class="note">${w.T.toFixed(1)} °C, ветер ${w.wind.toFixed(1)} м/с, солнце ${w.solar.toFixed(0)} Вт/м² · нагрузка ${a.load.toFixed(0)} МВт (${S.band.toUpperCase()}) · ${S.view==='after'&&D.P[h]?`с превентивными мерами: G2 = ${ctrl.gP.G2} МВт, G3 = ${ctrl.gP.G3} МВт, U = ${(ctrl.vset.G2*100).toFixed(0)}%`:'исходная загрузка генерации: G2 = 35 МВт, G3 = 15 МВт'}</div>
+   <div style="margin-top:8px">${x.st===3?'<span class="tag">? не определено</span>':x.st===2?'<span class="tag c">✕ авария</span>':x.st===1?'<span class="tag w">▲ предупреждение</span>':'<span class="tag g">✓ допустимо</span>'} <span class="note">${methodText(r)}</span></div>`;
+  const rs=[...(r.reasons||[]).map(s=>`<li class="c">${s}</li>`),...(r.warns||[]).map(s=>`<li class="w">${s}</li>`)];
+  t+=`<ul class="r">${rs.join('')||'<li style="list-style:none;margin-left:-18px" class="note">Нарушений нет.</li>'}</ul>`;
+  t+=`<button class="chip" id="pvBtn" style="margin-top:6px">P–V кривая: запас по нагрузке</button><div id="pvBox"></div>`;
+  if(r.converged) t+=`<p class="note">Мин. напряжение ${(r.minV*100).toFixed(1)}% · макс. загрузка ${(r.maxLoading*100).toFixed(0)}% · потери ${r.losses.toFixed(2)} МВт</p>`;
+  if(x.st>0){
+    const key=h+'_'+cid;
+    t+=`<h3>Действия после отказа</h3><div id="corrBox">`;
+    if(D.corr[key]&&S.view==='after') t+=corrHtml(D.corr[key]);
+    else t+=`<button class="chip" id="corrBtn">Рассчитать корректирующие действия</button>`;
+    t+='</div>';
+  }
+  $('#detailText').innerHTML=t;
+  $('#pvBtn').onclick=async()=>{$('#pvBtn').textContent='Расчёт…';await wait(20);renderPV(pvCurve({T:w.T,load:a.load,linesOut:x.c.linesOut,gensOut:x.c.gensOut,ratingA:a.ratingA,ctrl}),a.load);$('#pvBtn').remove();};
+  const btn=$('#corrBtn');
+  if(btn) btn.onclick=async()=>{btn.textContent='Расчёт…';await wait(20);const o=optimize({T:w.T,load:a.load,linesOut:x.c.linesOut,gensOut:x.c.gensOut,ratingA:a.ratingA,ctrl},40);$('#corrBox').innerHTML=corrHtml(o);};
+}
+function methodText(r){
+  if(r.status==='pv_limit') return `предел найден методом продолжения${r.pv&&r.pv.confirmed?', якобиан у предела почти вырожден (σmin упало в '+(1/r.pv.sigmaRatio).toFixed(0)+' раз)':''}`;
+  if(r.unknown) return 'ни Ньютон, ни демпфированный Ньютон, ни продолжение не дали решения';
+  const m=(r.islands||[]).map(i=>i.method);
+  if(m.includes('continuation')) return 'решено методом продолжения';
+  if(m.includes('damped')) return 'решено демпфированным методом Ньютона';
+  return 'решено методом Ньютона–Рафсона';
+}
+function renderPV(pv,load){
+  const box=$('#pvBox');
+  const pts=pv.curve.filter(p=>p.minV);
+  box.innerHTML=`<svg id="pvChart" viewBox="0 0 420 170" style="width:100%"></svg><p class="note">${pv.lambdaMax?`Режим существует до <b style="color:var(--ink)">${(pv.lambdaMax*load).toFixed(0)} МВт</b> (${(pv.lambdaMax*100).toFixed(0)}% текущей нагрузки). `:`Предел не достигнут даже при ${(pts[pts.length-1].lam*100).toFixed(0)}% нагрузки — запас большой. `}Точки до предела — расчёты с увеличением всех нагрузок; красные — с нарушениями ограничений.</p>`;
+  const svg=$('#pvChart');const W=420,H=170,L=40,R=10,T=10,B=26,pw=W-L-R,ph=H-T-B;
+  const xs=pts.map(p=>p.lam*load),xmin=Math.min(...xs)*0.95,xmax=Math.max(...xs,load)*1.05;
+  const vmin=Math.min(0.8,...pts.map(p=>p.minV))-0.02,vmax=1.08;
+  const x=v=>L+(v-xmin)/(xmax-xmin)*pw,y=v=>T+ph-(v-vmin)/(vmax-vmin)*ph;
+  [0.8,0.9,1.0].filter(v=>v>vmin).forEach(v=>{el('line',{x1:L,x2:W-R,y1:y(v),y2:y(v),stroke:v===0.9?C.crit:C.grid,'stroke-dasharray':v===0.9?'4 3':''},svg);el('text',{x:L-5,y:y(v)+3,'text-anchor':'end','font-size':9,fill:C.ink3,'font-family':'IBM Plex Mono'},svg,(v*100)+'%');});
+  const step=Math.max(50,Math.round((xmax-xmin)/5/50)*50);for(let v=Math.ceil(xmin/step)*step;v<=xmax;v+=step)el('text',{x:x(v),y:H-12,'text-anchor':'middle','font-size':9,fill:C.ink3,'font-family':'IBM Plex Mono'},svg,v);
+  el('text',{x:L+pw/2,y:H-1,'text-anchor':'middle','font-size':9,fill:C.ink2},svg,'Суммарная нагрузка, МВт → мин. напряжение');
+  el('line',{x1:x(load),x2:x(load),y1:T,y2:T+ph,stroke:C.ink2,'stroke-dasharray':'3 3'},svg);
+  el('path',{d:pts.map((p,i)=>(i?'L':'M')+x(p.lam*load)+','+y(p.minV)).join(''),fill:'none',stroke:C.accent,'stroke-width':2},svg);
+  pts.forEach(p=>el('circle',{cx:x(p.lam*load),cy:y(p.minV),r:p.nose?5:3,fill:p.nose?C.crit:p.crit?C.serious:C.accent,stroke:'#1a1a19','stroke-width':1.5},svg));
+}
+function corrHtml(o){
+  if(!o.summary.length) return '<p class="note">Доступными средствами режим не улучшается.</p>';
+  const fr=o.result;
+  return `<div class="note">${fr.critical?'<span class="tag c">нарушения остаются</span>':'<span class="tag g">режим восстановлен</span>'} ${fr.shedMW>0?`· ограничение ${fr.shedMW.toFixed(1)} МВт`:''}</div><ol class="acts">${o.summary.map(s=>`<li class="${s.startsWith('Ограничить')?'shed':''}">${s}</li>`).join('')}</ol>`;
+}
+
+// ---------- старт ----------
+buildPresets();syncCtl();
+(async()=>{await wait(50);await trainModels();recalc();})();
+</script>
+</body>
+</html>
