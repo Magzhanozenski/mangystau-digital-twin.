@@ -160,11 +160,31 @@ def graph_110(snap: dict, segs: list[dict], keep=tagged_110) -> tuple[list[dict]
     return edges, {"ways": len(ways), "km": sum(float(seg[e["id"]]["km"]) for e in ways)}
 
 
+def bus_loads(est: dict) -> dict:
+    """Средняя нагрузка по ПС OSM из load_estimates.yaml: {osm: {"mw", "parts": [...], "sourced": bool}}."""
+    out = {}
+    for c in est["consumers"]:
+        mw = c["energy_mln_kwh"] * 1000 / est["hours"] if "energy_mln_kwh" in c else c["avg_mw"]
+        if abs(sum(a["frac"] for a in c["allocation"]) - 1) > 1e-3:
+            raise ValueError(f"load_estimates: доли раскладки {c['id']} не дают 1")
+        for a in c["allocation"]:
+            b = out.setdefault(a["osm"], {"mw": 0.0, "parts": [], "sourced": True})
+            b["mw"] += mw * a["frac"]
+            b["sourced"] &= c["status"] == "источник"
+            b["parts"].append({"consumer": c["name"], "mw": round(mw * a["frac"], 3), "frac": a["frac"],
+                               "energy_status": c["status"], "energy_source": c.get("source", ""),
+                               "energy_basis": c.get("location", c.get("basis", "")), "allocation_basis": a["basis"]})
+    return out
+
+
 def build(snapshot: Path | None = None) -> tuple[dict, dict]:
     snap_path = Path(snapshot or latest_snapshot())
     snap = json.loads(snap_path.read_text(encoding="utf-8"))
     segs, subs, ids = _csv("osm_segments.csv"), _csv("osm_substations.csv"), _csv("substation_ids.csv")
     docs = yaml.safe_load((SRC / "documents.yaml").read_text(encoding="utf-8"))
+    est = yaml.safe_load((SRC / "load_estimates.yaml").read_text(encoding="utf-8"))
+    loads = bus_loads(est)
+    load_total = sum(v["mw"] for v in loads.values())
     dsrc = docs["sources"]
     sub = {s["osm"]: s for s in subs}
     ident = {r["osm"]: r for r in ids}
@@ -202,9 +222,10 @@ def build(snapshot: Path | None = None) -> tuple[dict, dict]:
     for e in edges:
         deg[e["p"]] += 1
         deg[e["q"]] += 1
-    load_pts = [p for p in pts if island_of[p] in modelled and p[0] == "s" and p[1] not in
-                {x for v in feeds.values() for x in v}]
-    share = round(1.0 / len(load_pts), 6) if load_pts else 0.0
+    known = {p[1] for p in pts if p[0] == "s" and island_of[p] in modelled}
+    missing = sorted(set(loads) - known)
+    if missing:
+        raise ValueError(f"load_estimates: ПС {missing} нет в модели")
     for p in pts:
         if island_of[p] not in modelled:
             continue
@@ -215,20 +236,34 @@ def build(snapshot: Path | None = None) -> tuple[dict, dict]:
             nm = r.get("match_name") or f"ПС {p[1]}"
             s = sub[p[1]]
             is_feed = p[1] in {x for v in feeds.values() for x in v}
+            ld = loads.get(p[1])
+            if is_feed:
+                share_mark = {"status": "допущение", "basis": "питающий узел: нагрузка 110 кВ не задаётся"}
+            elif ld:
+                share_mark = {"status": "допущение", "basis": "доля = средняя нагрузка ПС / сумма по модели; раскладка "
+                              "потребителей по ПС — допущение: " + "; ".join(x["allocation_basis"] for x in ld["parts"])}
+            else:
+                share_mark = {"status": "допущение", "basis": "потребители у этой ПС не найдены — нагрузка 0"}
             name_mark = ({"status": "источник", "source": r["source"], "confidence": r["confidence"], "basis": r["basis"]}
                          if r.get("status") == "источник" else
                          {"status": "допущение", "confidence": r.get("confidence", "не опознана"),
                           "basis": r.get("basis", "нет строки опознания")})
             buses.append({
-                "id": bid, "name": nm, "short": nm[:18], "share": 0.0 if is_feed else share,
+                "id": bid, "name": nm, "short": nm[:18],
+                "share": round(ld["mw"] / load_total, 6) if ld and not is_feed else 0.0,
+                **({"load_mw_avg": round(ld["mw"], 3)} if ld and not is_feed else {}),
                 "osm": p[1], "lat": float(s["lat"]), "lon": float(s["lon"]), "kind": "ПС 220/110 (питание)" if is_feed else "ПС",
                 "status": "допущение",
                 "basis": "положение — OSM (источник); доля нагрузки — допущение",
                 "marks": {
                     "position": {"status": "источник", "source": f"https://www.openstreetmap.org/{p[1]}"},
                     "name": name_mark,
-                    "share": {"status": "допущение", "basis": "питающий узел: нагрузка 110 кВ не задаётся" if is_feed
-                              else f"поровну между {len(load_pts)} ПС модели; реальная нагрузка — шаг 2.3"},
+                    "share": share_mark,
+                    **({"load_energy": {
+                        "status": "источник" if ld["sourced"] else "допущение",
+                        "source": "; ".join(sorted({x["energy_source"] for x in ld["parts"] if x["energy_source"]})),
+                        "basis": "; ".join(f"{x['consumer']}: {x['mw']} МВт ({'годовое потребление ' + est['year'].__str__() + ', ' + x['energy_basis'] if x['energy_status'] == 'источник' else x['energy_basis']})" for x in ld["parts"])}}
+                       if ld and not is_feed else {}),
                 }})
         else:
             kind = "ответвление" if deg[p] >= 3 else "обрыв линии"
@@ -320,12 +355,14 @@ def build(snapshot: Path | None = None) -> tuple[dict, dict]:
         "conductors_by_count": share_of(lines, "conductor"),
         "circuits_by_km": share_of(lines, "circuits", lambda l: l["km"]),
         "loads_by_bus": share_of([b for b in buses if b["share"] > 0], "share"),
+        "load_energy_by_mw": share_of([b for b in buses if b["share"] > 0], "load_energy", lambda b: b["load_mw_avg"]),
         "generation_by_mw": share_of(gens, "p_max_mw", lambda g: g["p_max_mw"]),
         "generation_location_by_count": share_of(gens, "location"),
         "substation_names_by_count": {
             "sources": sum(1 for b in buses if b.get("marks", {}).get("name", {}).get("status") == "источник"),
             "total": sum(1 for b in buses if "name" in b.get("marks", {}))},
-        "note": "доли — по полям marks; «источник» в нагрузках и генерации отсутствует: реальная нагрузка — шаг 2.3",
+        "note": ("доли — по полям marks. loads_by_bus — раскладка по ПС (всегда допущение); load_energy_by_mw — доля "
+                 "средней нагрузки, опирающейся на годовое потребление из документов; генерация — эквиваленты (допущение)"),
     }
 
     osm_base = snap.get("osm3s", {}).get("timestamp_osm_base", "?")
@@ -334,7 +371,17 @@ def build(snapshot: Path | None = None) -> tuple[dict, dict]:
                  "built": date.today().isoformat(), "builder": "twin/build_real.py",
                  "osm_snapshot": snap_path.name, "osm_base_timestamp": osm_base,
                  "license": "ODbL 1.0 (© участники OpenStreetMap)",
-                 "scope": "только линии с тегом voltage=110000 (вариант A)"},
+                 "scope": "только линии с тегом voltage=110000 (вариант A)",
+                 "load_scenarios": {
+                     "year": est["year"], "avg_total_mw": round(load_total, 3),
+                     **{k: round(load_total * v["factor"], 3) for k, v in est["scenarios"].items()},
+                     "by_island_avg_mw": {k: round(sum(c["energy_mln_kwh"] * 1000 / est["hours"] if "energy_mln_kwh" in c
+                                                       else c["avg_mw"] for c in est["consumers"] if c["island"] == k), 3)
+                                          for k in sorted({c["island"] for c in est["consumers"]})},
+                     "status": "допущение",
+                     "basis": "суммарная нагрузка для scn.load: средняя = энергия/8760 (потребление — источник, "
+                              "прочая нагрузка Бейнеу — допущение) × коэффициенты режимов (допущение), "
+                              "см. data/network_sources/load_estimates.yaml"}},
         "conductors": base["conductors"],
         "buses": buses, "lines": lines, "generators": gens,
         "model": base["model"],

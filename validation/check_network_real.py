@@ -19,18 +19,24 @@ from twin.pp_model import run_pp  # noqa: E402
 
 PATH = ROOT / "data" / "network_real.yaml"
 TOL_V, TOL_P = 1e-4, 0.01
-BASE_LOAD_MW = 60  # ДОПУЩЕНИЕ: суммарная нагрузка ПС модели в базовом режиме (реальная нагрузка — шаг 2.3)
-SCENARIOS = [{"T": 25, "load": BASE_LOAD_MW}, {"T": 25, "load": 30}, {"T": 40, "load": 100}]
+# Опорные режимы нагрузки — из meta.load_scenarios (шаг 2.3, load_estimates.yaml); температуры — ДОПУЩЕНИЕ:
+# минимум — ночь +10 °C, база +25 °C, пик — летняя жара +40 °C.
+SCENARIO_T = {"min": 10, "base": 25, "peak": 40}
+
+
+def scenarios(net):
+    ls = net.raw["meta"]["load_scenarios"]
+    return [{"name": k, "T": t, "load": ls[k]} for k, t in SCENARIO_T.items()]
 
 
 def main() -> int:
     net = load_network(PATH)
     print(f"{PATH.name}: шин {len(net.buses)}, линий (цепей) {len(net.lines)}, эквивалентов {len(net.gens)}")
     bad = 0
-    for scn in SCENARIOS:
+    for scn in scenarios(net):
         r = run_power_flow(scn, net)
         live = r["live"]
-        print(f"\nT={scn['T']} °C, нагрузка {scn['load']} МВт: островов {len(r['islands'])}, "
+        print(f"\nрежим «{scn['name']}», T={scn['T']} °C, нагрузка {scn['load']:.1f} МВт: островов {len(r['islands'])}, "
               f"живых шин {len(live)} из {len(net.buses)}, непокрыто {r['unserved']:.3f} МВт, АЧР {r['achr']:.3f} МВт")
         for isl in r["islands"]:
             print(f"   остров: балансирующий {isl['slack']}, шин {len(isl['ids'])}")

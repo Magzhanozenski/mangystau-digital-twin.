@@ -133,3 +133,30 @@ def test_reproducible(real):
 def test_core_runs_on_real(real):
     r = run_power_flow({"T": 25, "load": 60}, load_network(REAL))
     assert len(r["live"]) == len(r["V"]) and r["unserved"] == 0
+
+
+def test_bus_loads_from_estimates():
+    est = {"hours": 8760, "consumers": [
+        {"id": "a", "name": "A", "island": "X", "energy_mln_kwh": 87.6, "status": "источник", "source": "http://s",
+         "location": "стр. 1", "allocation": [{"osm": "way/1", "frac": 0.5, "basis": "b"}, {"osm": "way/2", "frac": 0.5, "basis": "b"}]},
+        {"id": "b", "name": "B", "island": "X", "avg_mw": 4, "status": "допущение", "basis": "нет данных",
+         "allocation": [{"osm": "way/2", "frac": 1.0, "basis": "b"}]}]}
+    out = br.bus_loads(est)
+    assert out["way/1"]["mw"] == pytest.approx(5) and out["way/1"]["sourced"]
+    assert out["way/2"]["mw"] == pytest.approx(9) and not out["way/2"]["sourced"]
+    est["consumers"][1]["allocation"][0]["frac"] = 0.7
+    with pytest.raises(ValueError):
+        br.bus_loads(est)
+
+
+def test_load_scenarios_and_marks(real):
+    d, _ = real
+    ls = d["meta"]["load_scenarios"]
+    assert ls["status"] == "допущение" and ls["min"] < ls["base"] < ls["peak"]
+    assert ls["base"] == pytest.approx(sum(b.get("load_mw_avg", 0) for b in d["buses"]), abs=1e-2)
+    for b in d["buses"]:
+        if b["share"] > 0:
+            m = b["marks"]["load_energy"]
+            assert m["status"] in ("источник", "допущение")
+            if m["status"] == "источник":
+                assert m["source"].startswith("http")
