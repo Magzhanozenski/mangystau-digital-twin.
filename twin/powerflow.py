@@ -229,6 +229,10 @@ def run_power_flow(scn: dict, net: Network | None = None) -> dict:
     res = {"V": {}, "ang": {}, "gen": {}, "flows": {}, "islands": [], "live": [], "unserved": 0.0,
            "achr": 0.0, "shedMW": shed_mw, "loadBus": load_bus, "violations": []}
     worst, lam_max, pv = "ok", None, None
+    slack_ids = [g["id"] for g in net.gens if g["slack"]]
+    if len(slack_ids) != 1:
+        raise ValueError(f"в данных сети должен быть ровно один генератор со slack: true, найдено {slack_ids}")
+    main_id = slack_ids[0]
 
     for ids in comps:
         gens = [Gen(g["id"], g["bus"], g["name"],
@@ -244,9 +248,10 @@ def run_power_flow(scn: dict, net: Network | None = None) -> dict:
                 res["V"][i] = 0.0
                 res["ang"][i] = 0.0
             continue
-        slack = next((g for g in gens if g.id == "G1"), None) or max(gens, key=lambda g: g.p_max)
+        # балансирующий — генератор с флагом slack в данных сети; в острове без него — самый мощный
+        slack = next((g for g in gens if g.id == main_id), None) or max(gens, key=lambda g: g.p_max)
         slack.slack = True
-        main = slack.id == "G1"
+        main = slack.id == main_id
         cap = sum(g.p_max for g in gens)
         frac = 0.0
         if not main and isl_load * 1.03 > cap:
