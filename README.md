@@ -20,7 +20,7 @@
 | DLR (упрощённый тепловой баланс IEEE 738) | реализовано |
 | Прогноз нагрузки (нейросеть vs линейная модель) | реализовано на **синтетической** истории |
 | N-1 по 24 часам (336 расчётов), превентивные меры, ограничения скорости набора | реализовано |
-| Схема сети Мангистау | **условная**: 8 узлов 110 кВ, 11 линий, 3 источника |
+| Схема сети Мангистау | **условная** (`network.yaml`): 8 узлов, 11 линий — для сверок; **по открытым источникам** (`network_real.yaml`): 2 острова 110 кВ по OSM, без Актау/Жетыбая/Жанаозена |
 | Реальная погода (Open-Meteo: архив ERA5 2023–2025, прогноз) | загружается (`twin/weather.py`), сверена со станциями; **в расчёты ещё не подключена** |
 | Реальная нагрузка | **нет** |
 | Трансформаторы, динамика, релейная защита | **не моделируются** |
@@ -28,10 +28,13 @@
 ## Структура
 
 ```
-data/           параметры сети (network.yaml), точки погоды (weather_points.yaml) — у каждого значения пометка
-                «источник» или «допущение»; data/weather/ — почасовая погода Open-Meteo (CSV)
+data/           параметры сети: network.yaml (условная), network_real.yaml (по открытым источникам), точки погоды
+                (weather_points.yaml) — у каждого значения пометка «источник» или «допущение»;
+                data/weather/ — почасовая погода Open-Meteo (CSV); data/osm/ — снимок OpenStreetMap;
+                data/network_sources/ — таблицы OSM, факты из документов (documents.yaml), опознание ПС
 twin/           Python-ядро: network.py — загрузка данных, powerflow.py — расчёт режима, pp_model.py — модель в pandapower,
-                weather.py — погода Open-Meteo
+                weather.py — погода Open-Meteo, osm.py — снимок OSM, substation_match.py — опознание ПС,
+                build_real.py — сборка network_real.yaml
 tests/          автотесты pytest
 core_js/        расчётное ядро (JavaScript): engine2.js — режим сети и оптимизация, day.js — сутки вперёд
 validation/     независимая проверка ядра (Node.js + Python/numpy/scipy) и сверка с pandapower
@@ -64,6 +67,10 @@ python validation/check.py
 python validation/check_pv.py
 python validation/compare_pandapower.py   # нужен pandapower
 python validation/check_weather.py        # погода: целостность и сверка со станциями NOAA ISD (нужен интернет при первом запуске)
+python validation/check_network_real.py   # сеть по открытым источникам: ядро vs pandapower
+python validation/compare_network.py      # условная сеть vs реальная → validation/compare_network_report.md
+python validation/make_map.py             # проверочная карта → validation/network_map.html
+python -m twin.build_real                 # пересобрать data/network_real.yaml из снимка OSM и документов
 ```
 
 Результаты на 09.11.2026:
@@ -77,7 +84,9 @@ python validation/check_weather.py        # погода: целостность
 
 ## Что условно
 
-- Названия подстанций настоящие, но топология, длины и марки проводов, нагрузки и мощности станций — допущения.
+- В условной сети (`network.yaml`) названия подстанций настоящие, но топология, длины и марки проводов, нагрузки и мощности станций — допущения.
+- В сети по открытым источникам (`network_real.yaml`) трассы и длины — из OSM, но марки проводов, нагрузки и питание от 220 кВ — допущения;
+  сетей Актау, Жетыбая и Жанаозена в ней нет (в OSM у этих линий нет тега напряжения). Доли источников — в разделе `summary` файла.
 - История нагрузки — синтетическая (2 года по часам), поэтому точность прогноза (MAPE ≈ 2 %) показывает
   работоспособность метода, а не точность на реальных данных.
 - Погода в веб-прототипе и в `core_js/day.js` — по-прежнему сценарий, а не прогноз: реальные данные
@@ -90,5 +99,12 @@ python validation/check_weather.py        # погода: целостность
   Лицензия [CC BY 4.0](https://open-meteo.com/en/licence); бесплатный API — для некоммерческого использования.
 - **Координаты точек:** [GeoNames](https://www.geonames.org/), CC BY 4.0.
 - **Наблюдения станций (только для проверки):** NOAA NCEI, [Integrated Surface Database](https://www.ncei.noaa.gov/products/land-based-station/integrated-surface-database).
+- **Схема сети:** © участники [OpenStreetMap](https://www.openstreetmap.org/copyright), данные по лицензии
+  [Open Database License (ODbL) 1.0](https://opendatacommons.org/licenses/odbl/1-0/). Снимок `data/osm/power_*.json`
+  и производные `data/network_sources/osm_*.csv`, `data/network_real.yaml`, `validation/network_map.html` распространяются
+  на условиях ODbL 1.0 с указанием авторства OpenStreetMap.
+- **Документы о сети:** годовые отчёты АО «МРЭК» (kase.kz, mrek.kz), отчёт ТОО «Казахстанские коммунальные системы»,
+  сайт и пресс-релизы KEGOC, экологические документы (ecoportal.kz), новости — полный список со страницами
+  и цитатами в `data/network_sources/documents.yaml`.
 
 План работ — в [docs/roadmap.md](docs/roadmap.md).
