@@ -78,13 +78,18 @@ def circuits_of(tags: dict) -> tuple[int, str, str]:
     return 1, "допущение", "нет тегов circuits и cables — принята 1 цепь"
 
 
-def graph_110(snap: dict, segs: list[dict]) -> tuple[list[dict], dict]:
-    """Рёбра между узлами-терминалами (ПС, ответвления, обрывы) по линиям с тегом 110 кВ.
-    Связность — по всем общим узлам OSM (в т. ч. внутренним), не только по концам участков."""
+def tagged_110(s: dict) -> bool:
+    """Участок с тегом voltage=110000 (вариант A)."""
+    return s.get("kv") == "110.0" and s.get("kv_basis") == "тег voltage"
+
+
+def graph_110(snap: dict, segs: list[dict], keep=tagged_110) -> tuple[list[dict], dict]:
+    """Рёбра между узлами-терминалами (ПС, ответвления, обрывы) по участкам, для которых keep(seg) истинно
+    (по умолчанию — линии с тегом 110 кВ). Связность — по всем общим узлам OSM (в т. ч. внутренним).
+    У ребра kv_km — длина по классам напряжения участков ('' — без тега)."""
     seg = {int(s["way"]): s for s in segs}
     ways = [e for e in snap["elements"]
-            if e.get("tags", {}).get("power") in ("line", "cable") and seg.get(e["id"], {}).get("kv") == "110.0"
-            and seg[e["id"]]["kv_basis"] == "тег voltage"]
+            if e.get("tags", {}).get("power") in ("line", "cable") and e["id"] in seg and keep(seg[e["id"]])]
     inc = Counter()
     for e in ways:
         n = e["nodes"]
@@ -111,7 +116,7 @@ def graph_110(snap: dict, segs: list[dict]) -> tuple[list[dict], dict]:
         for a, b in zip(cut, cut[1:]):
             km = sum(haversine_km(g[i]["lat"], g[i]["lon"], g[i + 1]["lat"], g[i + 1]["lon"]) for i in range(a, b))
             pieces.append({"p": point(n[a]), "q": point(n[b]), "km": km, "ways": [e["id"]], "circ": [circ],
-                           "flags": seg[e["id"]]["flags"]})
+                           "flags": seg[e["id"]]["flags"], "kv": seg[e["id"]]["kv"]})
 
     # склейка цепочек: терминал — ПС или узел, где сходится не ровно два куска;
     # от каждого терминала идём по кускам через узлы-продолжения до следующего терминала
@@ -137,7 +142,10 @@ def graph_110(snap: dict, segs: list[dict]) -> tuple[list[dict], dict]:
             if not nxt:
                 break
             i = nxt[0]
-        edges.append({"p": start, "q": pt, "km": sum(c["km"] for c in chain),
+        kv_km = Counter()
+        for c in chain:
+            kv_km[c["kv"]] += c["km"]
+        edges.append({"p": start, "q": pt, "km": sum(c["km"] for c in chain), "kv_km": dict(kv_km),
                       "ways": [w for c in chain for w in c["ways"]], "circ": [x for c in chain for x in c["circ"]],
                       "flags": ";".join(sorted({c["flags"] for c in chain if c["flags"]}))})
 
