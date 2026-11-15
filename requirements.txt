@@ -3,3 +3,4 @@ scipy
 pyyaml
 pytest
 pandapower
+matplotlib
