@@ -31,9 +31,9 @@ class Gen:
 
 
 class Island:
-    """Остров сети: узлы, матрица проводимостей, параметры линий."""
+    """Остров сети: узлы, матрица проводимостей, параметры линий и трансформаторов."""
 
-    def __init__(self, net: Network, ids: list[int], lines: list[dict], T: float):
+    def __init__(self, net: Network, ids: list[int], lines: list[dict], T: float, trafos: list[dict] = ()):
         self.ids = ids
         self.idx = {b: i for i, b in enumerate(ids)}
         n = len(ids)
@@ -50,6 +50,17 @@ class Island:
             self.Y[i, j] -= y
             self.Y[j, i] -= y
             self.lp[l["id"]] = (i, j, y, B)
+        self.tp = {}
+        for t in trafos:  # П-схема: намагничивание поровну на обе стороны (как trafo_model="pi" в pandapower)
+            if t["from"] not in self.idx:
+                continue
+            y, ym = net.trafo_pu(t)
+            i, j = self.idx[t["from"]], self.idx[t["to"]]
+            self.Y[i, i] += y + ym / 2
+            self.Y[j, j] += y + ym / 2
+            self.Y[i, j] -= y
+            self.Y[j, i] -= y
+            self.tp[t["id"]] = (i, j, y, ym)
         self.n = n
 
 
@@ -185,7 +196,7 @@ def _continuation(isl, gens, Pd, Qd, base):
 def run_power_flow(scn: dict, net: Network | None = None) -> dict:
     """Расчёт режима. scn: T, load, linesOut, gensOut, ctrl (как в JS), ratingA (необязательно)."""
     net = net or load_network()
-    base, kv = net.base_mva, net.base_kv
+    base = net.base_mva
     T = scn.get("T", 25)
     ctrl = scn.get("ctrl") or net.default_ctrl()
     lines_out = set(scn.get("linesOut", []))
@@ -195,8 +206,9 @@ def run_power_flow(scn: dict, net: Network | None = None) -> dict:
     achr_res = net.model["achr_reserve"]["value"]
 
     line_in = [l for l in net.lines if l["id"] not in lines_out]
+    trafo_in = [t for t in net.trafos if t["id"] not in lines_out]  # трансформаторы отключаются тем же списком
     adj = {b["id"]: [] for b in net.buses}
-    for l in line_in:
+    for l in line_in + trafo_in:
         adj[l["from"]].append(l["to"])
         adj[l["to"]].append(l["from"])
     seen, comps = set(), []
@@ -258,7 +270,7 @@ def run_power_flow(scn: dict, net: Network | None = None) -> dict:
             frac = min(1.0, 1 - cap * achr_res / isl_load)
             res["achr"] += isl_load * frac
             res["violations"].append(("achr", ids, isl_load * frac))
-        isl = Island(net, ids, line_in, T)
+        isl = Island(net, ids, line_in, T, trafo_in)
         Pd = np.zeros(isl.n)
         Qd = np.zeros(isl.n)
         for i in ids:
@@ -313,11 +325,30 @@ def run_power_flow(scn: dict, net: Network | None = None) -> dict:
             Iji = (Vc[j] - Vc[i]) * y + Vc[j] * 1j * B / 2
             Sij = Vc[i] * np.conj(Iij) * base
             Sji = Vc[j] * np.conj(Iji) * base
-            Ia = abs(Sij) / (np.sqrt(3) * kv * abs(Vc[i])) * 1000
-            Ib = abs(Sji) / (np.sqrt(3) * kv * abs(Vc[j])) * 1000
+            lkv = net.bus_kv(line["from"])  # ток — по напряжению ступени, где лежит линия
+            Ia = abs(Sij) / (np.sqrt(3) * lkv * abs(Vc[i])) * 1000
+            Ib = abs(Sji) / (np.sqrt(3) * lkv * abs(Vc[j])) * 1000
             I = max(Ia, Ib)
             res["flows"][lid] = {"P": float(Sij.real), "Q": float(Sij.imag), "I": float(I), "Imax": imax,
                                  "loading": float(I / imax), "loss": float((Sij + Sji).real)}
+        for tid, (i, j, y, ym) in isl.tp.items():
+            t = net.trafo(tid)
+            Iij = (Vc[i] - Vc[j]) * y + Vc[i] * ym / 2
+            Iji = (Vc[j] - Vc[i]) * y + Vc[j] * ym / 2
+            Sij = Vc[i] * np.conj(Iij) * base
+            Sji = Vc[j] * np.conj(Iji) * base
+            hv = net.bus_kv(t["from"])
+            I = abs(Sij) / (np.sqrt(3) * hv * abs(Vc[i])) * 1000
+            res["flows"][tid] = {"kind": "trafo", "P": float(Sij.real), "Q": float(Sij.imag), "I": float(I),
+                                 "Imax": t["sn_mva"] / (np.sqrt(3) * hv) * 1000,
+                                 # загрузка по току: max(|S|/U) / Sном (как loading_percent в pandapower)
+                                 "loading": float(max(abs(Sij) / abs(Vc[i]), abs(Sji) / abs(Vc[j])) / t["sn_mva"]),
+                                 "loss": float((Sij + Sji).real)}
+    for t in net.trafos:
+        if t["id"] not in res["flows"]:
+            res["flows"][t["id"]] = {"kind": "trafo", "out": t["id"] in lines_out, "dead": t["id"] not in lines_out,
+                                     "P": 0.0, "Q": 0.0, "I": 0.0, "loading": 0.0, "loss": 0.0,
+                                     "Imax": t["sn_mva"] / (np.sqrt(3) * net.bus_kv(t["from"])) * 1000}
     for l in net.lines:
         if l["id"] not in res["flows"]:
             res["flows"][l["id"]] = {"out": l["id"] in lines_out, "dead": l["id"] not in lines_out,

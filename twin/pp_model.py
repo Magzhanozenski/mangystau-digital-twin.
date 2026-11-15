@@ -33,7 +33,7 @@ def build_pp(scn: dict, net: Network | None = None, islands: list | None = None)
     rf = net.resistance_factor(T)
 
     m = pp.create_empty_network(sn_mva=net.base_mva, f_hz=net.freq)
-    bus = {b["id"]: pp.create_bus(m, vn_kv=net.base_kv, name=b["name"]) for b in net.buses}
+    bus = {b["id"]: pp.create_bus(m, vn_kv=net.bus_kv(b["id"]), name=b["name"]) for b in net.buses}
 
     for l in net.lines:
         c = net.conductors[l["conductor"]]
@@ -44,6 +44,14 @@ def build_pp(scn: dict, net: Network | None = None, islands: list | None = None)
             max_i_ka=net.static_rating_a(l, T) / 1000, name=l["id"],
             in_service=l["id"] not in lines_out,
         )
+
+    for t in net.trafos:  # номинальные напряжения обмоток = напряжения шин (как в ядре), РПН нет
+        pp.create_transformer_from_parameters(
+            m, bus[t["from"]], bus[t["to"]], sn_mva=t["sn_mva"],
+            vn_hv_kv=net.bus_kv(t["from"]), vn_lv_kv=net.bus_kv(t["to"]),
+            vkr_percent=t["pk_kw"] / (10 * t["sn_mva"]), vk_percent=t["uk_pct"],
+            pfe_kw=t.get("p0_kw", 0.0), i0_percent=t.get("i0_pct", 0.0), shift_degree=0,
+            name=t["id"], in_service=t["id"] not in lines_out)
 
     achr = {}
     slack_of = {}
@@ -85,7 +93,8 @@ def run_pp(scn: dict, net: Network | None = None, islands: list | None = None) -
     _require()
     net = net or load_network()
     m = build_pp(scn, net, islands)
-    pp.runpp(m, algorithm="nr", init="flat", enforce_q_lims=True, tolerance_mva=1e-9, max_iteration=50)
+    pp.runpp(m, algorithm="nr", init="flat", enforce_q_lims=True, tolerance_mva=1e-9, max_iteration=50,
+             trafo_model="pi")
     out = {"V": {}, "ang": {}, "flows": {}, "gen": {}}
     for b, (vm, va) in zip(net.buses, m.res_bus[["vm_pu", "va_degree"]].itertuples(index=False)):
         out["V"][b["id"]] = float(vm) if vm == vm else 0.0
@@ -94,6 +103,11 @@ def run_pp(scn: dict, net: Network | None = None, islands: list | None = None) -
         r = m.res_line.iloc[idx]
         out["flows"][l["id"]] = {"P": float(r.p_from_mw), "Q": float(r.q_from_mvar),
                                  "I": float(max(r.i_from_ka, r.i_to_ka) * 1000), "loss": float(r.pl_mw)}
+    for idx, t in enumerate(net.trafos):
+        r = m.res_trafo.iloc[idx]
+        out["flows"][t["id"]] = {"kind": "trafo", "P": float(r.p_hv_mw), "Q": float(r.q_hv_mvar),
+                                 "I": float(r.i_hv_ka * 1000), "loss": float(r.pl_mw),
+                                 "loading": float(r.loading_percent / 100)}
     for idx, row in m.gen.iterrows():
         r = m.res_gen.loc[idx]
         out["gen"][row["name"]] = {"P": float(r.p_mw), "Q": float(r.q_mvar)}
