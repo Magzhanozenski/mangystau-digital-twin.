@@ -25,7 +25,6 @@ OSM_WAY = "https://www.openstreetmap.org/way/"
 
 CONDUCTOR = "АС-185"      # ДОПУЩЕНИЕ: марка провода ВЛ 110 кВ в документах не найдена
 CONDUCTOR_220 = "АС-300"  # ДОПУЩЕНИЕ: марка провода ВЛ 220 кВ в документах не найдена
-MAEK_PMAX = 960           # ИСТОЧНИК (вторичный): располагаемая ТЭЦ-1 45 + ТЭЦ-2 465 + ТЭС 450 МВт, Википедия
 MAEK_V = 1.02             # ДОПУЩЕНИЕ: напряжение шин 220 кВ МАЭК, о.е.
 COS_PHI = 0.92            # ДОПУЩЕНИЕ: cos φ нагрузки для выбора мощности трансформаторов 110/10 (≈ tan φ 0,42 в model)
 CONDUCTOR_220_PARAMS = {"r_ohm_km": 0.098, "x_ohm_km": 0.429, "b_s_km": 2.64e-6, "i_rated_a": 690, "diameter_m": 0.024,
@@ -46,7 +45,8 @@ HEADER = """\
 #   Подробно по полям — в marks: {{поле: {{status, source | basis}}}}. Доли источников — в разделе summary.
 # В расчёт входят линии с тегом voltage=110000 (вариант A) и 220000; линии без тега — в not_modelled.
 # Трансформаторы: АТ 220/110 (мощность — источник, где найдена; параметры — типовые ГОСТ, допущение) и типовые
-#   110/10 на ПС с нагрузкой (допущение). МАЭК — балансирующий источник на шинах 220 кВ ТЭЦ-3; Атырау — эквивалент.
+#   110/10 на ПС с нагрузкой (допущение). МАЭК — агрегаты ТЭЦ-1, ТЭЦ-2, ТЭС на шинах 220 кВ ТЭЦ-3 (шаг 3.1;
+#   балансирует MAEK-TEC2-1); ГПЭС Жанаозен 6×20 МВт — сценарий 2026 (p_mw = 0); Атырау — эквивалент.
 # Районы вне сети 110 кВ (Актау, Жанаозен) — эквивалентные нагрузки на шинах 220 кВ ТЭЦ-3 и 110 кВ ПС «Узень».
 """
 
@@ -212,6 +212,53 @@ def _circuit_lines(prefix: str, a: int, b: int, e: dict, buses: list, conductor:
                 **({"flags": {"status": "допущение", "basis": f"теги OSM: {e['flags']}"}} if e["flags"] else {}),
             }})
     return out
+
+
+UNIT_FIELDS = ("p_max_mw", "p_min_mw", "ramp_mw_h", "start_h", "min_up_h", "min_down_h", "heat_rate_gj_mwh", "startup_gj")
+
+
+def load_units(path: Path = SRC / "unit_params.yaml") -> tuple[list, dict]:
+    """Агрегаты из unit_params.yaml с раскрытием copy_of. Возвращает (список, раздел base_dispatch)."""
+    raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    by_id, out = {}, []
+    for u in raw["units"]:
+        full = {**by_id[u["copy_of"]], **{k: v for k, v in u.items() if k != "copy_of"}} if "copy_of" in u else dict(u)
+        by_id[u["id"]] = full
+        out.append(full)
+    return out, raw["base_dispatch"]
+
+
+def units_to_gens(units: list, base_dispatch: dict, key_of: dict, load_avg: float) -> list:
+    """Генераторы network_real из агрегатов: значения параметров + пометки по полям."""
+    def val(x):
+        return x["value"] if isinstance(x, dict) else x
+    base_units = [u for u in units if not u.get("scenario") and not u.get("slack")]
+    total = sum(val(u["p_max_mw"]) for u in base_units) + sum(val(u["p_max_mw"]) for u in units if u.get("slack"))
+    gens = []
+    for u in units:
+        pmax = val(u["p_max_mw"])
+        gpes = u["station"].startswith("ГПЭС")
+        q = round((0.5 if gpes else 0.6) * pmax, 1)
+        marks = {k: {"status": u[k]["status"], "basis": u[k]["basis"], **({"source": u[k]["source"]} if u[k].get("source") else {})}
+                 for k in UNIT_FIELDS}
+        mr = u.get("must_run", False)
+        marks["must_run"] = ({"status": mr["status"], "basis": mr["basis"]} if isinstance(mr, dict)
+                             else {"status": "допущение", "basis": "агрегат не обязан работать"})
+        marks["location"] = {"status": "допущение", "basis": u.get("bus_basis", "все станции МАЭК — на шинах 220 кВ ТЭЦ-3; "
+                             "ГПЭС — на шинах 110 кВ ПС «Узень» (подключение — generator_facts.yaml, выведено)")}
+        marks["p_mw"] = {"status": "допущение", "basis": base_dispatch["basis"]}
+        marks["q_limits"] = {"status": "допущение", "basis": f"±{0.5 if gpes else 0.6}·Pmax"}
+        gens.append({
+            "id": u["id"], "bus": key_of[(u["bus"]["osm"], u["bus"]["kv"])], "name": u["name"], "station": u["station"],
+            **({"scenario": u["scenario"]} if u.get("scenario") else {}),
+            "slack": bool(u.get("slack")),
+            "p_mw": None if u.get("slack") else (0.0 if u.get("scenario") else round(load_avg * pmax / total, 1)),
+            **{k: val(u[k]) for k in UNIT_FIELDS}, "must_run": bool(val(mr)),
+            "q_min_mvar": -q, "q_max_mvar": q, "v_pu": 1.01 if gpes else MAEK_V,
+            "status": "источник" if all(m["status"] == "источник" for m in marks.values()) else "допущение",
+            "basis": "агрегат для суточного графика (шаг 3.1); параметры — data/network_sources/unit_params.yaml",
+            "marks": marks})
+    return gens
 
 
 def assign_loads(buses: list, trafos: list, loads: dict, est: dict, tdn: dict) -> float:
@@ -448,30 +495,20 @@ def build(snapshot: Path | None = None) -> tuple[dict, dict]:
                                                "basis": "коэффициент 220/110 номинальный, РПН не моделируется"}}})
 
     # генерация
-    wiki = "https://ru.wikipedia.org/wiki/Мангистауский_атомно-энергетический_комбинат"
-    gens = [
-        {"id": "MAEK", "bus": key_of[("way/224369643", 220)],
-         "name": "МАЭК (ТЭЦ-1, ТЭЦ-2, ТЭС) — эквивалент на шинах 220 кВ ТЭЦ-3",
-         "slack": True, "p_mw": None, "p_max_mw": MAEK_PMAX, "q_min_mvar": -400, "q_max_mvar": 500,
-         "v_pu": MAEK_V, "ramp_mw_h": 120, "status": "допущение",
-         "basis": "все станции МАЭК сведены в один источник на шинах 220 кВ ТЭЦ-3",
-         "marks": {"p_max_mw": {"status": "источник", "source": wiki,
-                                "basis": "располагаемая мощность ТЭЦ-1 45 + ТЭЦ-2 465 + ТЭС 450 МВт "
-                                         "(Википедия, баланс 2014 г. — вторичный)"},
-                   "location": {"status": "допущение", "basis": "точка подключения всех станций — шины 220 кВ ТЭЦ-3"},
-                   "v_pu": {"status": "допущение", "basis": f"напряжение шин 220 кВ МАЭК {MAEK_V} о.е."},
-                   "q_limits": {"status": "допущение", "basis": "−400…+500 Мвар"},
-                   "slack": {"status": "допущение", "basis": "МАЭК — основной источник энергоузла, балансирующий"}}},
+    units, base_dispatch = load_units()
+    load_avg_est = sum(v["mw"] for v in loads.values())
+    gens = units_to_gens(units, base_dispatch, key_of, load_avg_est) + [
         {"id": "ATYRAU", "bus": atyrau, "name": "Атырауский энергоузел — эквивалент по ВЛ 220 кВ",
          "slack": False, "p_mw": 0.0, "p_max_mw": 80, "q_min_mvar": -100, "q_max_mvar": 100,
-         "v_pu": 1.0, "ramp_mw_h": 80, "status": "допущение",
+         "v_pu": 1.0, "ramp_mw_h": 80, "p_min_mw": 0.0, "start_h": 0, "min_up_h": 0, "min_down_h": 0,
+         "heat_rate_gj_mwh": 0.0, "startup_gj": 0.0, "must_run": False, "fixed_p": True, "status": "допущение",
          "basis": "решение пользователя: эквивалент с P = 0, держит напряжение; переток — отдельным сценарием",
          "marks": {"p_max_mw": {"status": "допущение",
                                 "basis": "переток по слабой связи ~80 МВт (dknews.kz, 14.11.2025, дата измерения не указана)"},
                    "location": {"status": "допущение", "basis": "конец ВЛ 220 кВ у края снимка OSM"},
                    "v_pu": {"status": "допущение", "basis": "1,0 о.е."},
                    "q_limits": {"status": "допущение", "basis": "±100 Мвар"},
-                   "slack": {"status": "допущение", "basis": "PV-узел, P = 0"}}},
+                   "slack": {"status": "допущение", "basis": "PV-узел, P = 0 (в суточном графике не участвует)"}}},
     ]
 
     # нагрузка по шинам и типовые трансформаторы 110/10 на ПС с нагрузкой

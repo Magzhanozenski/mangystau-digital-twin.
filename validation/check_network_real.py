@@ -27,8 +27,17 @@ SCENARIO_T = {"min": 10, "base": 25, "peak": 40}
 
 
 def scenarios(net):
+    """Режимы min/base/peak. Загрузка агрегатов (p_mw задана при средней нагрузке) масштабируется под нагрузку
+    режима — это статическая проверка сети, не суточный график (его строит twin/dispatch.py)."""
     ls = net.raw["meta"]["load_scenarios"]
-    return [{"name": k, "T": t, "load": ls[k]} for k, t in SCENARIO_T.items()]
+    out = []
+    for k, t in SCENARIO_T.items():
+        ctrl = net.default_ctrl()
+        ctrl["gP"] = {g: p * ls[k] / ls["base"] for g, p in ctrl["gP"].items()}
+        # состав 2023 г.: агрегаты сценариев (ГПЭС Жанаозен, 2026) отключены
+        out.append({"name": k, "T": t, "load": ls[k], "ctrl": ctrl,
+                    "gensOut": [g["id"] for g in net.gens if g.get("scenario")]})
+    return out
 
 
 def main() -> int:

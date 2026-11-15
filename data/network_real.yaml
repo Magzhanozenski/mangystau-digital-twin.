@@ -11,7 +11,8 @@
 #   Подробно по полям — в marks: {поле: {status, source | basis}}. Доли источников — в разделе summary.
 # В расчёт входят линии с тегом voltage=110000 (вариант A) и 220000; линии без тега — в not_modelled.
 # Трансформаторы: АТ 220/110 (мощность — источник, где найдена; параметры — типовые ГОСТ, допущение) и типовые
-#   110/10 на ПС с нагрузкой (допущение). МАЭК — балансирующий источник на шинах 220 кВ ТЭЦ-3; Атырау — эквивалент.
+#   110/10 на ПС с нагрузкой (допущение). МАЭК — агрегаты ТЭЦ-1, ТЭЦ-2, ТЭС на шинах 220 кВ ТЭЦ-3 (шаг 3.1;
+#   балансирует MAEK-TEC2-1); ГПЭС Жанаозен 6×20 МВт — сценарий 2026 (p_mw = 0); Атырау — эквивалент.
 # Районы вне сети 110 кВ (Актау, Жанаозен) — эквивалентные нагрузки на шинах 220 кВ ТЭЦ-3 и 110 кВ ПС «Узень».
 
 meta:
@@ -2901,35 +2902,801 @@ transformers:
       status: допущение
       basis: номинальный, РПН не моделируется
 generators:
-- id: MAEK
+- id: MAEK-TES-1
   bus: 34
-  name: МАЭК (ТЭЦ-1, ТЭЦ-2, ТЭС) — эквивалент на шинах 220 кВ ТЭЦ-3
+  name: ТЭС МАЭК, блок 1
+  station: ТЭС
+  slack: false
+  p_mw: 61.3
+  p_max_mw: 150
+  p_min_mw: 60
+  ramp_mw_h: 45
+  start_h: 2
+  min_up_h: 8
+  min_down_h: 6
+  heat_rate_gj_mwh: 10.6
+  startup_gj: 600
+  must_run: false
+  q_min_mvar: -90.0
+  q_max_mvar: 90.0
+  v_pu: 1.02
+  status: допущение
+  basis: агрегат для суточного графика (шаг 3.1); параметры — data/network_sources/unit_params.yaml
+  marks:
+    p_max_mw:
+      status: допущение
+      basis: располагаемая ТЭС 450 МВт (Википедия, источник) поровну на 3 блока; число блоков 3 — по выдаче поиска с maek.kz (404, не проверено),
+        в Википедии — «два блока» в 1984 г.
+    p_min_mw:
+      status: допущение
+      basis: '40 % номинала: технический минимум определяется котлом (ТПУ, стр. 7); для газовых котлов диапазон шире, чем у пылеугольного блока
+        200 МВт (25 %, leg_200mw); числа для МАЭК нет'
+    ramp_mw_h:
+      status: допущение
+      basis: '0,5 %/мин = 30 %/ч: порядок величины блока 200 МВт (0,25–0,65 %/мин, leg_200mw); требование до 5 %/мин (ТПУ) — для регулирующих
+        блоков'
+    start_h:
+      status: допущение
+      basis: пуск из горячего состояния 1…2 ч (ТПУ, стр. 17); в суточном графике — горячие пуски
+    min_up_h:
+      status: допущение
+      basis: работа на минимуме дольше 8…10 ч дороже останова и пуска (ТПУ, стр. 18) — обратная оценка; числа для МАЭК нет
+    min_down_h:
+      status: допущение
+      basis: простой до 6…10 ч — пуск из горячего состояния (ТПУ, стр. 17); короче 6 ч останов не выгоден
+    heat_rate_gj_mwh:
+      status: допущение
+      basis: КПД ≈ 34 % для газомазутных конденсационных блоков 1980-х; данных МАЭК нет
+    startup_gj:
+      status: допущение
+      basis: топливо на горячий пуск блока 150 МВт ≈ 1 ч работы на номинале; данных нет
+    must_run:
+      status: допущение
+      basis: агрегат не обязан работать
+    location:
+      status: допущение
+      basis: все станции МАЭК — на шинах 220 кВ ТЭЦ-3; ГПЭС — на шинах 110 кВ ПС «Узень» (подключение — generator_facts.yaml, выведено)
+    p_mw:
+      status: допущение
+      basis: p_mw = средняя нагрузка модели × p_max / Σ p_max агрегатов состава 2023 г. (ГПЭС — 0); балансирует MAEK-TEC2-1; check_network_real
+        масштабирует ту же долю под нагрузку режима
+    q_limits:
+      status: допущение
+      basis: ±0.6·Pmax
+- id: MAEK-TES-2
+  bus: 34
+  name: ТЭС МАЭК, блок 2
+  station: ТЭС
+  slack: false
+  p_mw: 61.3
+  p_max_mw: 150
+  p_min_mw: 60
+  ramp_mw_h: 45
+  start_h: 2
+  min_up_h: 8
+  min_down_h: 6
+  heat_rate_gj_mwh: 10.6
+  startup_gj: 600
+  must_run: false
+  q_min_mvar: -90.0
+  q_max_mvar: 90.0
+  v_pu: 1.02
+  status: допущение
+  basis: агрегат для суточного графика (шаг 3.1); параметры — data/network_sources/unit_params.yaml
+  marks:
+    p_max_mw:
+      status: допущение
+      basis: располагаемая ТЭС 450 МВт (Википедия, источник) поровну на 3 блока; число блоков 3 — по выдаче поиска с maek.kz (404, не проверено),
+        в Википедии — «два блока» в 1984 г.
+    p_min_mw:
+      status: допущение
+      basis: '40 % номинала: технический минимум определяется котлом (ТПУ, стр. 7); для газовых котлов диапазон шире, чем у пылеугольного блока
+        200 МВт (25 %, leg_200mw); числа для МАЭК нет'
+    ramp_mw_h:
+      status: допущение
+      basis: '0,5 %/мин = 30 %/ч: порядок величины блока 200 МВт (0,25–0,65 %/мин, leg_200mw); требование до 5 %/мин (ТПУ) — для регулирующих
+        блоков'
+    start_h:
+      status: допущение
+      basis: пуск из горячего состояния 1…2 ч (ТПУ, стр. 17); в суточном графике — горячие пуски
+    min_up_h:
+      status: допущение
+      basis: работа на минимуме дольше 8…10 ч дороже останова и пуска (ТПУ, стр. 18) — обратная оценка; числа для МАЭК нет
+    min_down_h:
+      status: допущение
+      basis: простой до 6…10 ч — пуск из горячего состояния (ТПУ, стр. 17); короче 6 ч останов не выгоден
+    heat_rate_gj_mwh:
+      status: допущение
+      basis: КПД ≈ 34 % для газомазутных конденсационных блоков 1980-х; данных МАЭК нет
+    startup_gj:
+      status: допущение
+      basis: топливо на горячий пуск блока 150 МВт ≈ 1 ч работы на номинале; данных нет
+    must_run:
+      status: допущение
+      basis: агрегат не обязан работать
+    location:
+      status: допущение
+      basis: все станции МАЭК — на шинах 220 кВ ТЭЦ-3; ГПЭС — на шинах 110 кВ ПС «Узень» (подключение — generator_facts.yaml, выведено)
+    p_mw:
+      status: допущение
+      basis: p_mw = средняя нагрузка модели × p_max / Σ p_max агрегатов состава 2023 г. (ГПЭС — 0); балансирует MAEK-TEC2-1; check_network_real
+        масштабирует ту же долю под нагрузку режима
+    q_limits:
+      status: допущение
+      basis: ±0.6·Pmax
+- id: MAEK-TES-3
+  bus: 34
+  name: ТЭС МАЭК, блок 3
+  station: ТЭС
+  slack: false
+  p_mw: 61.3
+  p_max_mw: 150
+  p_min_mw: 60
+  ramp_mw_h: 45
+  start_h: 2
+  min_up_h: 8
+  min_down_h: 6
+  heat_rate_gj_mwh: 10.6
+  startup_gj: 600
+  must_run: false
+  q_min_mvar: -90.0
+  q_max_mvar: 90.0
+  v_pu: 1.02
+  status: допущение
+  basis: агрегат для суточного графика (шаг 3.1); параметры — data/network_sources/unit_params.yaml
+  marks:
+    p_max_mw:
+      status: допущение
+      basis: располагаемая ТЭС 450 МВт (Википедия, источник) поровну на 3 блока; число блоков 3 — по выдаче поиска с maek.kz (404, не проверено),
+        в Википедии — «два блока» в 1984 г.
+    p_min_mw:
+      status: допущение
+      basis: '40 % номинала: технический минимум определяется котлом (ТПУ, стр. 7); для газовых котлов диапазон шире, чем у пылеугольного блока
+        200 МВт (25 %, leg_200mw); числа для МАЭК нет'
+    ramp_mw_h:
+      status: допущение
+      basis: '0,5 %/мин = 30 %/ч: порядок величины блока 200 МВт (0,25–0,65 %/мин, leg_200mw); требование до 5 %/мин (ТПУ) — для регулирующих
+        блоков'
+    start_h:
+      status: допущение
+      basis: пуск из горячего состояния 1…2 ч (ТПУ, стр. 17); в суточном графике — горячие пуски
+    min_up_h:
+      status: допущение
+      basis: работа на минимуме дольше 8…10 ч дороже останова и пуска (ТПУ, стр. 18) — обратная оценка; числа для МАЭК нет
+    min_down_h:
+      status: допущение
+      basis: простой до 6…10 ч — пуск из горячего состояния (ТПУ, стр. 17); короче 6 ч останов не выгоден
+    heat_rate_gj_mwh:
+      status: допущение
+      basis: КПД ≈ 34 % для газомазутных конденсационных блоков 1980-х; данных МАЭК нет
+    startup_gj:
+      status: допущение
+      basis: топливо на горячий пуск блока 150 МВт ≈ 1 ч работы на номинале; данных нет
+    must_run:
+      status: допущение
+      basis: агрегат не обязан работать
+    location:
+      status: допущение
+      basis: все станции МАЭК — на шинах 220 кВ ТЭЦ-3; ГПЭС — на шинах 110 кВ ПС «Узень» (подключение — generator_facts.yaml, выведено)
+    p_mw:
+      status: допущение
+      basis: p_mw = средняя нагрузка модели × p_max / Σ p_max агрегатов состава 2023 г. (ГПЭС — 0); балансирует MAEK-TEC2-1; check_network_real
+        масштабирует ту же долю под нагрузку режима
+    q_limits:
+      status: допущение
+      basis: ±0.6·Pmax
+- id: MAEK-TEC2-1
+  bus: 34
+  name: ТЭЦ-2 МАЭК, группа 1
+  station: ТЭЦ-2
   slack: true
   p_mw: null
-  p_max_mw: 960
-  q_min_mvar: -400
-  q_max_mvar: 500
+  p_max_mw: 155
+  p_min_mw: 62
+  ramp_mw_h: 46
+  start_h: 2
+  min_up_h: 8
+  min_down_h: 6
+  heat_rate_gj_mwh: 11.6
+  startup_gj: 600
+  must_run: true
+  q_min_mvar: -93.0
+  q_max_mvar: 93.0
   v_pu: 1.02
-  ramp_mw_h: 120
   status: допущение
-  basis: все станции МАЭК сведены в один источник на шинах 220 кВ ТЭЦ-3
+  basis: агрегат для суточного графика (шаг 3.1); параметры — data/network_sources/unit_params.yaml
+  marks:
+    p_max_mw:
+      status: допущение
+      basis: располагаемая ТЭЦ-2 465 МВт (Википедия, источник) на 3 условные группы агрегатов; состав турбин не найден
+    p_min_mw:
+      status: допущение
+      basis: 40 % — как у блоков ТЭС; у ТЭЦ минимум ещё задаётся отпуском тепла
+    ramp_mw_h:
+      status: допущение
+      basis: 30 %/ч — как у блоков ТЭС
+    start_h:
+      status: допущение
+      basis: как у блоков ТЭС (ТПУ, стр. 17)
+    min_up_h:
+      status: допущение
+      basis: как у блоков ТЭС
+    min_down_h:
+      status: допущение
+      basis: как у блоков ТЭС
+    heat_rate_gj_mwh:
+      status: допущение
+      basis: КПД ≈ 31 % по электроэнергии (ТЭЦ 1968–1985 г., часть тепла отпускается); данных нет
+    startup_gj:
+      status: допущение
+      basis: как у блоков ТЭС
+    must_run:
+      status: допущение
+      basis: ТЭЦ работает по тепловому графику (тепло и опреснение для Актау); в графике группа 1 всегда включена и балансирует сеть в расчёте
+        режима
+    location:
+      status: допущение
+      basis: все станции МАЭК — на шинах 220 кВ ТЭЦ-3; ГПЭС — на шинах 110 кВ ПС «Узень» (подключение — generator_facts.yaml, выведено)
+    p_mw:
+      status: допущение
+      basis: p_mw = средняя нагрузка модели × p_max / Σ p_max агрегатов состава 2023 г. (ГПЭС — 0); балансирует MAEK-TEC2-1; check_network_real
+        масштабирует ту же долю под нагрузку режима
+    q_limits:
+      status: допущение
+      basis: ±0.6·Pmax
+- id: MAEK-TEC2-2
+  bus: 34
+  name: ТЭЦ-2 МАЭК, группа 2
+  station: ТЭЦ-2
+  slack: false
+  p_mw: 63.3
+  p_max_mw: 155
+  p_min_mw: 62
+  ramp_mw_h: 46
+  start_h: 2
+  min_up_h: 8
+  min_down_h: 6
+  heat_rate_gj_mwh: 11.6
+  startup_gj: 600
+  must_run: false
+  q_min_mvar: -93.0
+  q_max_mvar: 93.0
+  v_pu: 1.02
+  status: допущение
+  basis: агрегат для суточного графика (шаг 3.1); параметры — data/network_sources/unit_params.yaml
+  marks:
+    p_max_mw:
+      status: допущение
+      basis: располагаемая ТЭЦ-2 465 МВт (Википедия, источник) на 3 условные группы агрегатов; состав турбин не найден
+    p_min_mw:
+      status: допущение
+      basis: 40 % — как у блоков ТЭС; у ТЭЦ минимум ещё задаётся отпуском тепла
+    ramp_mw_h:
+      status: допущение
+      basis: 30 %/ч — как у блоков ТЭС
+    start_h:
+      status: допущение
+      basis: как у блоков ТЭС (ТПУ, стр. 17)
+    min_up_h:
+      status: допущение
+      basis: как у блоков ТЭС
+    min_down_h:
+      status: допущение
+      basis: как у блоков ТЭС
+    heat_rate_gj_mwh:
+      status: допущение
+      basis: КПД ≈ 31 % по электроэнергии (ТЭЦ 1968–1985 г., часть тепла отпускается); данных нет
+    startup_gj:
+      status: допущение
+      basis: как у блоков ТЭС
+    must_run:
+      status: допущение
+      basis: агрегат не обязан работать
+    location:
+      status: допущение
+      basis: все станции МАЭК — на шинах 220 кВ ТЭЦ-3; ГПЭС — на шинах 110 кВ ПС «Узень» (подключение — generator_facts.yaml, выведено)
+    p_mw:
+      status: допущение
+      basis: p_mw = средняя нагрузка модели × p_max / Σ p_max агрегатов состава 2023 г. (ГПЭС — 0); балансирует MAEK-TEC2-1; check_network_real
+        масштабирует ту же долю под нагрузку режима
+    q_limits:
+      status: допущение
+      basis: ±0.6·Pmax
+- id: MAEK-TEC2-3
+  bus: 34
+  name: ТЭЦ-2 МАЭК, группа 3
+  station: ТЭЦ-2
+  slack: false
+  p_mw: 63.3
+  p_max_mw: 155
+  p_min_mw: 62
+  ramp_mw_h: 46
+  start_h: 2
+  min_up_h: 8
+  min_down_h: 6
+  heat_rate_gj_mwh: 11.6
+  startup_gj: 600
+  must_run: false
+  q_min_mvar: -93.0
+  q_max_mvar: 93.0
+  v_pu: 1.02
+  status: допущение
+  basis: агрегат для суточного графика (шаг 3.1); параметры — data/network_sources/unit_params.yaml
+  marks:
+    p_max_mw:
+      status: допущение
+      basis: располагаемая ТЭЦ-2 465 МВт (Википедия, источник) на 3 условные группы агрегатов; состав турбин не найден
+    p_min_mw:
+      status: допущение
+      basis: 40 % — как у блоков ТЭС; у ТЭЦ минимум ещё задаётся отпуском тепла
+    ramp_mw_h:
+      status: допущение
+      basis: 30 %/ч — как у блоков ТЭС
+    start_h:
+      status: допущение
+      basis: как у блоков ТЭС (ТПУ, стр. 17)
+    min_up_h:
+      status: допущение
+      basis: как у блоков ТЭС
+    min_down_h:
+      status: допущение
+      basis: как у блоков ТЭС
+    heat_rate_gj_mwh:
+      status: допущение
+      basis: КПД ≈ 31 % по электроэнергии (ТЭЦ 1968–1985 г., часть тепла отпускается); данных нет
+    startup_gj:
+      status: допущение
+      basis: как у блоков ТЭС
+    must_run:
+      status: допущение
+      basis: агрегат не обязан работать
+    location:
+      status: допущение
+      basis: все станции МАЭК — на шинах 220 кВ ТЭЦ-3; ГПЭС — на шинах 110 кВ ПС «Узень» (подключение — generator_facts.yaml, выведено)
+    p_mw:
+      status: допущение
+      basis: p_mw = средняя нагрузка модели × p_max / Σ p_max агрегатов состава 2023 г. (ГПЭС — 0); балансирует MAEK-TEC2-1; check_network_real
+        масштабирует ту же долю под нагрузку режима
+    q_limits:
+      status: допущение
+      basis: ±0.6·Pmax
+- id: MAEK-TEC1
+  bus: 34
+  name: ТЭЦ-1 МАЭК
+  station: ТЭЦ-1
+  slack: false
+  p_mw: 18.4
+  p_max_mw: 45
+  p_min_mw: 23
+  ramp_mw_h: 14
+  start_h: 2
+  min_up_h: 8
+  min_down_h: 6
+  heat_rate_gj_mwh: 12.4
+  startup_gj: 180
+  must_run: true
+  q_min_mvar: -27.0
+  q_max_mvar: 27.0
+  v_pu: 1.02
+  status: допущение
+  basis: агрегат для суточного графика (шаг 3.1); параметры — data/network_sources/unit_params.yaml
   marks:
     p_max_mw:
       status: источник
+      basis: располагаемая мощность ТЭЦ-1 (Википедия, баланс 2014 г. — вторичный)
       source: https://ru.wikipedia.org/wiki/Мангистауский_атомно-энергетический_комбинат
-      basis: располагаемая мощность ТЭЦ-1 45 + ТЭЦ-2 465 + ТЭС 450 МВт (Википедия, баланс 2014 г. — вторичный)
+    p_min_mw:
+      status: допущение
+      basis: '50 %: назначение ТЭЦ-1 — теплоснабжение Актау, работа по тепловому графику; числа нет'
+    ramp_mw_h:
+      status: допущение
+      basis: 30 %/ч — как у блоков ТЭС
+    start_h:
+      status: допущение
+      basis: как у блоков ТЭС
+    min_up_h:
+      status: допущение
+      basis: как у блоков ТЭС
+    min_down_h:
+      status: допущение
+      basis: как у блоков ТЭС
+    heat_rate_gj_mwh:
+      status: допущение
+      basis: КПД ≈ 29 %, старейшее оборудование (1963); данных нет
+    startup_gj:
+      status: допущение
+      basis: пропорционально мощности
+    must_run:
+      status: допущение
+      basis: ТЭЦ работает по тепловому графику
     location:
       status: допущение
-      basis: точка подключения всех станций — шины 220 кВ ТЭЦ-3
-    v_pu:
+      basis: все станции МАЭК — на шинах 220 кВ ТЭЦ-3; ГПЭС — на шинах 110 кВ ПС «Узень» (подключение — generator_facts.yaml, выведено)
+    p_mw:
       status: допущение
-      basis: напряжение шин 220 кВ МАЭК 1.02 о.е.
+      basis: p_mw = средняя нагрузка модели × p_max / Σ p_max агрегатов состава 2023 г. (ГПЭС — 0); балансирует MAEK-TEC2-1; check_network_real
+        масштабирует ту же долю под нагрузку режима
     q_limits:
       status: допущение
-      basis: −400…+500 Мвар
-    slack:
+      basis: ±0.6·Pmax
+- id: GPES-ZH-1
+  bus: 38
+  name: ГПЭС Жанаозен, агрегат 1
+  station: ГПЭС Жанаозен
+  scenario: '2026'
+  slack: false
+  p_mw: 0.0
+  p_max_mw: 20
+  p_min_mw: 2
+  ramp_mw_h: 20
+  start_h: 0
+  min_up_h: 1
+  min_down_h: 1
+  heat_rate_gj_mwh: 7.8
+  startup_gj: 2
+  must_run: false
+  q_min_mvar: -10.0
+  q_max_mvar: 10.0
+  v_pu: 1.01
+  status: допущение
+  basis: агрегат для суточного графика (шаг 3.1); параметры — data/network_sources/unit_params.yaml
+  marks:
+    p_max_mw:
+      status: источник
+      basis: 6 агрегатов по 20 МВт (energyland_gas_2026, lada_gas_ready)
+      source: https://energyland.info/news-show--electro-285299
+    p_min_mw:
+      status: источник
+      basis: минимум 10 % на агрегат — Wärtsilä 50SG (wartsila_50sg; данные производителя, модель агрегата — вывод)
+      source: https://wartsila.com/energy/solutions/engine-power-plants/wartsila-50sg-gas-engine
+    ramp_mw_h:
+      status: источник
+      basis: набор > 100 %/мин (wartsila_50sg) — в часовом графике без ограничения
+      source: https://wartsila.com/energy/solutions/engine-power-plants/wartsila-50sg-gas-engine
+    start_h:
+      status: источник
+      basis: пуск до полной нагрузки < 5 мин (wartsila_50sg) — в пределах часа
+      source: https://wartsila.com/energy/solutions/engine-power-plants/wartsila-50sg-gas-engine
+    min_up_h:
       status: допущение
-      basis: МАЭК — основной источник энергоузла, балансирующий
+      basis: ограничения производителя не найдены; шаг графика — 1 ч
+    min_down_h:
+      status: допущение
+      basis: останов 1 мин (wartsila_50sg); шаг графика — 1 ч
+    heat_rate_gj_mwh:
+      status: допущение
+      basis: КПД ≈ 46 % — типовой порядок для крупных газопоршневых агрегатов; данные станции не найдены
+    startup_gj:
+      status: допущение
+      basis: быстрый пуск, малый расход; данных нет
+    must_run:
+      status: допущение
+      basis: агрегат не обязан работать
+    location:
+      status: допущение
+      basis: все станции МАЭК — на шинах 220 кВ ТЭЦ-3; ГПЭС — на шинах 110 кВ ПС «Узень» (подключение — generator_facts.yaml, выведено)
+    p_mw:
+      status: допущение
+      basis: p_mw = средняя нагрузка модели × p_max / Σ p_max агрегатов состава 2023 г. (ГПЭС — 0); балансирует MAEK-TEC2-1; check_network_real
+        масштабирует ту же долю под нагрузку режима
+    q_limits:
+      status: допущение
+      basis: ±0.5·Pmax
+- id: GPES-ZH-2
+  bus: 38
+  name: ГПЭС Жанаозен, агрегат 2
+  station: ГПЭС Жанаозен
+  scenario: '2026'
+  slack: false
+  p_mw: 0.0
+  p_max_mw: 20
+  p_min_mw: 2
+  ramp_mw_h: 20
+  start_h: 0
+  min_up_h: 1
+  min_down_h: 1
+  heat_rate_gj_mwh: 7.8
+  startup_gj: 2
+  must_run: false
+  q_min_mvar: -10.0
+  q_max_mvar: 10.0
+  v_pu: 1.01
+  status: допущение
+  basis: агрегат для суточного графика (шаг 3.1); параметры — data/network_sources/unit_params.yaml
+  marks:
+    p_max_mw:
+      status: источник
+      basis: 6 агрегатов по 20 МВт (energyland_gas_2026, lada_gas_ready)
+      source: https://energyland.info/news-show--electro-285299
+    p_min_mw:
+      status: источник
+      basis: минимум 10 % на агрегат — Wärtsilä 50SG (wartsila_50sg; данные производителя, модель агрегата — вывод)
+      source: https://wartsila.com/energy/solutions/engine-power-plants/wartsila-50sg-gas-engine
+    ramp_mw_h:
+      status: источник
+      basis: набор > 100 %/мин (wartsila_50sg) — в часовом графике без ограничения
+      source: https://wartsila.com/energy/solutions/engine-power-plants/wartsila-50sg-gas-engine
+    start_h:
+      status: источник
+      basis: пуск до полной нагрузки < 5 мин (wartsila_50sg) — в пределах часа
+      source: https://wartsila.com/energy/solutions/engine-power-plants/wartsila-50sg-gas-engine
+    min_up_h:
+      status: допущение
+      basis: ограничения производителя не найдены; шаг графика — 1 ч
+    min_down_h:
+      status: допущение
+      basis: останов 1 мин (wartsila_50sg); шаг графика — 1 ч
+    heat_rate_gj_mwh:
+      status: допущение
+      basis: КПД ≈ 46 % — типовой порядок для крупных газопоршневых агрегатов; данные станции не найдены
+    startup_gj:
+      status: допущение
+      basis: быстрый пуск, малый расход; данных нет
+    must_run:
+      status: допущение
+      basis: агрегат не обязан работать
+    location:
+      status: допущение
+      basis: все станции МАЭК — на шинах 220 кВ ТЭЦ-3; ГПЭС — на шинах 110 кВ ПС «Узень» (подключение — generator_facts.yaml, выведено)
+    p_mw:
+      status: допущение
+      basis: p_mw = средняя нагрузка модели × p_max / Σ p_max агрегатов состава 2023 г. (ГПЭС — 0); балансирует MAEK-TEC2-1; check_network_real
+        масштабирует ту же долю под нагрузку режима
+    q_limits:
+      status: допущение
+      basis: ±0.5·Pmax
+- id: GPES-ZH-3
+  bus: 38
+  name: ГПЭС Жанаозен, агрегат 3
+  station: ГПЭС Жанаозен
+  scenario: '2026'
+  slack: false
+  p_mw: 0.0
+  p_max_mw: 20
+  p_min_mw: 2
+  ramp_mw_h: 20
+  start_h: 0
+  min_up_h: 1
+  min_down_h: 1
+  heat_rate_gj_mwh: 7.8
+  startup_gj: 2
+  must_run: false
+  q_min_mvar: -10.0
+  q_max_mvar: 10.0
+  v_pu: 1.01
+  status: допущение
+  basis: агрегат для суточного графика (шаг 3.1); параметры — data/network_sources/unit_params.yaml
+  marks:
+    p_max_mw:
+      status: источник
+      basis: 6 агрегатов по 20 МВт (energyland_gas_2026, lada_gas_ready)
+      source: https://energyland.info/news-show--electro-285299
+    p_min_mw:
+      status: источник
+      basis: минимум 10 % на агрегат — Wärtsilä 50SG (wartsila_50sg; данные производителя, модель агрегата — вывод)
+      source: https://wartsila.com/energy/solutions/engine-power-plants/wartsila-50sg-gas-engine
+    ramp_mw_h:
+      status: источник
+      basis: набор > 100 %/мин (wartsila_50sg) — в часовом графике без ограничения
+      source: https://wartsila.com/energy/solutions/engine-power-plants/wartsila-50sg-gas-engine
+    start_h:
+      status: источник
+      basis: пуск до полной нагрузки < 5 мин (wartsila_50sg) — в пределах часа
+      source: https://wartsila.com/energy/solutions/engine-power-plants/wartsila-50sg-gas-engine
+    min_up_h:
+      status: допущение
+      basis: ограничения производителя не найдены; шаг графика — 1 ч
+    min_down_h:
+      status: допущение
+      basis: останов 1 мин (wartsila_50sg); шаг графика — 1 ч
+    heat_rate_gj_mwh:
+      status: допущение
+      basis: КПД ≈ 46 % — типовой порядок для крупных газопоршневых агрегатов; данные станции не найдены
+    startup_gj:
+      status: допущение
+      basis: быстрый пуск, малый расход; данных нет
+    must_run:
+      status: допущение
+      basis: агрегат не обязан работать
+    location:
+      status: допущение
+      basis: все станции МАЭК — на шинах 220 кВ ТЭЦ-3; ГПЭС — на шинах 110 кВ ПС «Узень» (подключение — generator_facts.yaml, выведено)
+    p_mw:
+      status: допущение
+      basis: p_mw = средняя нагрузка модели × p_max / Σ p_max агрегатов состава 2023 г. (ГПЭС — 0); балансирует MAEK-TEC2-1; check_network_real
+        масштабирует ту же долю под нагрузку режима
+    q_limits:
+      status: допущение
+      basis: ±0.5·Pmax
+- id: GPES-ZH-4
+  bus: 38
+  name: ГПЭС Жанаозен, агрегат 4
+  station: ГПЭС Жанаозен
+  scenario: '2026'
+  slack: false
+  p_mw: 0.0
+  p_max_mw: 20
+  p_min_mw: 2
+  ramp_mw_h: 20
+  start_h: 0
+  min_up_h: 1
+  min_down_h: 1
+  heat_rate_gj_mwh: 7.8
+  startup_gj: 2
+  must_run: false
+  q_min_mvar: -10.0
+  q_max_mvar: 10.0
+  v_pu: 1.01
+  status: допущение
+  basis: агрегат для суточного графика (шаг 3.1); параметры — data/network_sources/unit_params.yaml
+  marks:
+    p_max_mw:
+      status: источник
+      basis: 6 агрегатов по 20 МВт (energyland_gas_2026, lada_gas_ready)
+      source: https://energyland.info/news-show--electro-285299
+    p_min_mw:
+      status: источник
+      basis: минимум 10 % на агрегат — Wärtsilä 50SG (wartsila_50sg; данные производителя, модель агрегата — вывод)
+      source: https://wartsila.com/energy/solutions/engine-power-plants/wartsila-50sg-gas-engine
+    ramp_mw_h:
+      status: источник
+      basis: набор > 100 %/мин (wartsila_50sg) — в часовом графике без ограничения
+      source: https://wartsila.com/energy/solutions/engine-power-plants/wartsila-50sg-gas-engine
+    start_h:
+      status: источник
+      basis: пуск до полной нагрузки < 5 мин (wartsila_50sg) — в пределах часа
+      source: https://wartsila.com/energy/solutions/engine-power-plants/wartsila-50sg-gas-engine
+    min_up_h:
+      status: допущение
+      basis: ограничения производителя не найдены; шаг графика — 1 ч
+    min_down_h:
+      status: допущение
+      basis: останов 1 мин (wartsila_50sg); шаг графика — 1 ч
+    heat_rate_gj_mwh:
+      status: допущение
+      basis: КПД ≈ 46 % — типовой порядок для крупных газопоршневых агрегатов; данные станции не найдены
+    startup_gj:
+      status: допущение
+      basis: быстрый пуск, малый расход; данных нет
+    must_run:
+      status: допущение
+      basis: агрегат не обязан работать
+    location:
+      status: допущение
+      basis: все станции МАЭК — на шинах 220 кВ ТЭЦ-3; ГПЭС — на шинах 110 кВ ПС «Узень» (подключение — generator_facts.yaml, выведено)
+    p_mw:
+      status: допущение
+      basis: p_mw = средняя нагрузка модели × p_max / Σ p_max агрегатов состава 2023 г. (ГПЭС — 0); балансирует MAEK-TEC2-1; check_network_real
+        масштабирует ту же долю под нагрузку режима
+    q_limits:
+      status: допущение
+      basis: ±0.5·Pmax
+- id: GPES-ZH-5
+  bus: 38
+  name: ГПЭС Жанаозен, агрегат 5
+  station: ГПЭС Жанаозен
+  scenario: '2026'
+  slack: false
+  p_mw: 0.0
+  p_max_mw: 20
+  p_min_mw: 2
+  ramp_mw_h: 20
+  start_h: 0
+  min_up_h: 1
+  min_down_h: 1
+  heat_rate_gj_mwh: 7.8
+  startup_gj: 2
+  must_run: false
+  q_min_mvar: -10.0
+  q_max_mvar: 10.0
+  v_pu: 1.01
+  status: допущение
+  basis: агрегат для суточного графика (шаг 3.1); параметры — data/network_sources/unit_params.yaml
+  marks:
+    p_max_mw:
+      status: источник
+      basis: 6 агрегатов по 20 МВт (energyland_gas_2026, lada_gas_ready)
+      source: https://energyland.info/news-show--electro-285299
+    p_min_mw:
+      status: источник
+      basis: минимум 10 % на агрегат — Wärtsilä 50SG (wartsila_50sg; данные производителя, модель агрегата — вывод)
+      source: https://wartsila.com/energy/solutions/engine-power-plants/wartsila-50sg-gas-engine
+    ramp_mw_h:
+      status: источник
+      basis: набор > 100 %/мин (wartsila_50sg) — в часовом графике без ограничения
+      source: https://wartsila.com/energy/solutions/engine-power-plants/wartsila-50sg-gas-engine
+    start_h:
+      status: источник
+      basis: пуск до полной нагрузки < 5 мин (wartsila_50sg) — в пределах часа
+      source: https://wartsila.com/energy/solutions/engine-power-plants/wartsila-50sg-gas-engine
+    min_up_h:
+      status: допущение
+      basis: ограничения производителя не найдены; шаг графика — 1 ч
+    min_down_h:
+      status: допущение
+      basis: останов 1 мин (wartsila_50sg); шаг графика — 1 ч
+    heat_rate_gj_mwh:
+      status: допущение
+      basis: КПД ≈ 46 % — типовой порядок для крупных газопоршневых агрегатов; данные станции не найдены
+    startup_gj:
+      status: допущение
+      basis: быстрый пуск, малый расход; данных нет
+    must_run:
+      status: допущение
+      basis: агрегат не обязан работать
+    location:
+      status: допущение
+      basis: все станции МАЭК — на шинах 220 кВ ТЭЦ-3; ГПЭС — на шинах 110 кВ ПС «Узень» (подключение — generator_facts.yaml, выведено)
+    p_mw:
+      status: допущение
+      basis: p_mw = средняя нагрузка модели × p_max / Σ p_max агрегатов состава 2023 г. (ГПЭС — 0); балансирует MAEK-TEC2-1; check_network_real
+        масштабирует ту же долю под нагрузку режима
+    q_limits:
+      status: допущение
+      basis: ±0.5·Pmax
+- id: GPES-ZH-6
+  bus: 38
+  name: ГПЭС Жанаозен, агрегат 6
+  station: ГПЭС Жанаозен
+  scenario: '2026'
+  slack: false
+  p_mw: 0.0
+  p_max_mw: 20
+  p_min_mw: 2
+  ramp_mw_h: 20
+  start_h: 0
+  min_up_h: 1
+  min_down_h: 1
+  heat_rate_gj_mwh: 7.8
+  startup_gj: 2
+  must_run: false
+  q_min_mvar: -10.0
+  q_max_mvar: 10.0
+  v_pu: 1.01
+  status: допущение
+  basis: агрегат для суточного графика (шаг 3.1); параметры — data/network_sources/unit_params.yaml
+  marks:
+    p_max_mw:
+      status: источник
+      basis: 6 агрегатов по 20 МВт (energyland_gas_2026, lada_gas_ready)
+      source: https://energyland.info/news-show--electro-285299
+    p_min_mw:
+      status: источник
+      basis: минимум 10 % на агрегат — Wärtsilä 50SG (wartsila_50sg; данные производителя, модель агрегата — вывод)
+      source: https://wartsila.com/energy/solutions/engine-power-plants/wartsila-50sg-gas-engine
+    ramp_mw_h:
+      status: источник
+      basis: набор > 100 %/мин (wartsila_50sg) — в часовом графике без ограничения
+      source: https://wartsila.com/energy/solutions/engine-power-plants/wartsila-50sg-gas-engine
+    start_h:
+      status: источник
+      basis: пуск до полной нагрузки < 5 мин (wartsila_50sg) — в пределах часа
+      source: https://wartsila.com/energy/solutions/engine-power-plants/wartsila-50sg-gas-engine
+    min_up_h:
+      status: допущение
+      basis: ограничения производителя не найдены; шаг графика — 1 ч
+    min_down_h:
+      status: допущение
+      basis: останов 1 мин (wartsila_50sg); шаг графика — 1 ч
+    heat_rate_gj_mwh:
+      status: допущение
+      basis: КПД ≈ 46 % — типовой порядок для крупных газопоршневых агрегатов; данные станции не найдены
+    startup_gj:
+      status: допущение
+      basis: быстрый пуск, малый расход; данных нет
+    must_run:
+      status: допущение
+      basis: агрегат не обязан работать
+    location:
+      status: допущение
+      basis: все станции МАЭК — на шинах 220 кВ ТЭЦ-3; ГПЭС — на шинах 110 кВ ПС «Узень» (подключение — generator_facts.yaml, выведено)
+    p_mw:
+      status: допущение
+      basis: p_mw = средняя нагрузка модели × p_max / Σ p_max агрегатов состава 2023 г. (ГПЭС — 0); балансирует MAEK-TEC2-1; check_network_real
+        масштабирует ту же долю под нагрузку режима
+    q_limits:
+      status: допущение
+      basis: ±0.5·Pmax
 - id: ATYRAU
   bus: 39
   name: Атырауский энергоузел — эквивалент по ВЛ 220 кВ
@@ -2940,6 +3707,14 @@ generators:
   q_max_mvar: 100
   v_pu: 1.0
   ramp_mw_h: 80
+  p_min_mw: 0.0
+  start_h: 0
+  min_up_h: 0
+  min_down_h: 0
+  heat_rate_gj_mwh: 0.0
+  startup_gj: 0.0
+  must_run: false
+  fixed_p: true
   status: допущение
   basis: 'решение пользователя: эквивалент с P = 0, держит напряжение; переток — отдельным сценарием'
   marks:
@@ -2957,7 +3732,7 @@ generators:
       basis: ±100 Мвар
     slack:
       status: допущение
-      basis: PV-узел, P = 0
+      basis: PV-узел, P = 0 (в суточном графике не участвует)
 model:
   alpha_al_per_c:
     value: 0.00403
@@ -3027,12 +3802,12 @@ summary:
     total: 392.124
     share: 0.355
   generation_by_mw:
-    sources: 960
-    total: 1040
-    share: 0.923
+    sources: 165
+    total: 1160
+    share: 0.142
   generation_location_by_count:
     sources: 0
-    total: 2.0
+    total: 14.0
     share: 0.0
   substation_names_by_count:
     sources: 8
@@ -3042,7 +3817,19 @@ summary:
 islands:
 - buses: 47
   generators:
-  - MAEK
+  - MAEK-TES-1
+  - MAEK-TES-2
+  - MAEK-TES-3
+  - MAEK-TEC2-1
+  - MAEK-TEC2-2
+  - MAEK-TEC2-3
+  - MAEK-TEC1
+  - GPES-ZH-1
+  - GPES-ZH-2
+  - GPES-ZH-3
+  - GPES-ZH-4
+  - GPES-ZH-5
+  - GPES-ZH-6
   - ATYRAU
   km: 2920.7
 not_modelled:

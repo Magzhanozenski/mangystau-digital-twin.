@@ -84,3 +84,21 @@ def test_base_network_unchanged():
     """network.yaml без трансформаторов и vn_kv — поведение прежнее (сверка с JS — в test_network_data)."""
     n = load_network()
     assert n.trafos == [] and all(n.bus_kv(b["id"]) == 110 for b in n.buses)
+
+
+def test_several_generators_on_one_bus(tmp_path):
+    """Шина с несколькими генераторами: пределы Q суммируются (как в pandapower), Q делится по диапазону."""
+    buses = [_b(1, 110, 0.0), _b(2, 110, 1.0)]
+    lines = [{"id": "L", "from": 1, "to": 2, "km": 60, "conductor": "АС-185", "name": "л", "status": M, "basis": "т"}]
+    g2 = [dict(_g(f"G{i}", 2, False, p=10, pmax=20), q_min_mvar=-10, q_max_mvar=10, v_pu=1.01) for i in (2, 3, 4)]
+    net = _net(tmp_path, [], buses, lines, [_g("G1", 1, True)] + g2)
+    scn = {"T": 25, "load": 45}  # Q шины ≈ 19 Мвар: больше предела одного (10), меньше суммы (30)
+    r = run_power_flow(scn, net)
+    assert 10 < sum(r["gen"][g]["Q"] for g in ("G2", "G3", "G4")) < 30
+    assert not any(r["gen"][g]["atQlim"] for g in ("G2", "G3", "G4"))
+    p = pp_model.run_pp(scn, net, r["islands"])
+    assert max(abs(p["V"][b] - r["V"][b]) for b in r["live"]) < 1e-6
+    qs = [r["gen"][g]["Q"] for g in ("G2", "G3", "G4")]
+    assert max(qs) - min(qs) < 1e-9  # одинаковые генераторы — поровну
+    for g in ("G2", "G3", "G4"):
+        assert r["gen"][g]["Q"] == pytest.approx(p["gen"][g]["Q"], abs=1e-4)

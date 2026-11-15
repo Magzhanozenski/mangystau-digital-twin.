@@ -140,15 +140,24 @@ def _solve_q(isl, gens, Pd, Qd, lam, V0, th0, damped, base):
         if not sol["ok"]:
             return {"ok": False}
         changed = False
+        # пределы Q — по шине: Q шины сравнивается с суммой пределов её генераторов (как в pandapower);
+        # шина с балансирующим генератором пределов не имеет; на пределе фиксируются все генераторы шины
+        slack_buses = {g.bus for g in gens if g.slack}
+        by_bus = {}
         for g in gens:
-            if g.slack or g.fixed_q is not None:
-                continue
-            k = isl.idx[g.bus]
+            if not g.slack and g.fixed_q is None and g.bus not in slack_buses:
+                by_bus.setdefault(g.bus, []).append(g)
+        for bus, grp in by_bus.items():
+            k = isl.idx[bus]
             qg = (sol["Q"][k] + lam * Qd[k]) * base
-            if qg > g.q_max + 1e-6:
-                g.fixed_q, changed = g.q_max, True
-            elif qg < g.q_min - 1e-6:
-                g.fixed_q, changed = g.q_min, True
+            if qg > sum(g.q_max for g in grp) + 1e-6:
+                for g in grp:
+                    g.fixed_q = g.q_max
+                changed = True
+            elif qg < sum(g.q_min for g in grp) - 1e-6:
+                for g in grp:
+                    g.fixed_q = g.q_min
+                changed = True
         if not changed:
             return sol
         V0, th0 = sol["V"], sol["th"]
@@ -315,7 +324,14 @@ def run_power_flow(scn: dict, net: Network | None = None) -> dict:
             k = isl.idx[g.bus]
             others = sum(h.p_set / base for h in gens if h.bus == g.bus and h is not g)
             P = (sol["P"][k] + lam_used * Pd[k] - others) * base if g.slack else g.p_set
-            Q = g.fixed_q if g.fixed_q is not None else (sol["Q"][k] + lam_used * Qd[k]) * base
+            if g.fixed_q is not None:
+                Q = g.fixed_q
+            else:  # Q шины (за вычетом зафиксированных) делится между свободными генераторами шины по диапазону Q
+                free = [h for h in gens if h.bus == g.bus and h.fixed_q is None]
+                fixed = sum(h.fixed_q for h in gens if h.bus == g.bus and h.fixed_q is not None)
+                rng = sum(h.q_max - h.q_min for h in free)
+                share = (g.q_max - g.q_min) / rng if rng > 0 else 1 / len(free)
+                Q = ((sol["Q"][k] + lam_used * Qd[k]) * base - fixed) * share
             res["gen"][g.id] = {"P": float(P), "Q": float(Q), "Pmax": g.p_max, "atQlim": g.fixed_q is not None, "slack": g.slack}
         Vc = sol["V"] * np.exp(1j * sol["th"])
         for lid, (i, j, y, B) in isl.lp.items():

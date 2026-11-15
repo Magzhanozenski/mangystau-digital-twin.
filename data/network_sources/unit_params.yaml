@@ -1,0 +1,105 @@
+# Параметры агрегатов для суточного графика (шаг 3.1). Читается twin/build_real.py → generators в network_real.yaml.
+#
+# Почти всё здесь — ДОПУЩЕНИЯ: паспортных данных агрегатов МАЭК в открытом доступе нет (generator_facts.yaml →
+# not_found). У каждого значения — status и basis; источники — ключи generator_facts.yaml.
+# Единицы: МВт, МВт/ч, часы, ГДж (топливо), ГДж/МВт·ч (удельный расход).
+#
+# Модель агрегата в графике: включён/выключен по часам; включённый — от p_min до p_max; скорость набора и сброса
+# за час; после включения работает не меньше min_up_h, после отключения стоит не меньше min_down_h; пуск занимает
+# start_h часов (агрегат, выключенный в начале суток, не может выдать мощность раньше); пуск стоит startup_gj топлива.
+
+defaults_basis:
+  location: "все станции МАЭК — на шинах 220 кВ ТЭЦ-3 (связь шин 110/220 на МАЭК не моделируется) — допущение"
+
+units:
+  - id: MAEK-TES-1
+    name: ТЭС МАЭК, блок 1
+    station: ТЭС
+    bus: {osm: way/224369643, kv: 220}
+    p_max_mw: {value: 150, status: допущение, basis: "располагаемая ТЭС 450 МВт (Википедия, источник) поровну на 3 блока; число блоков 3 — по выдаче поиска с maek.kz (404, не проверено), в Википедии — «два блока» в 1984 г."}
+    p_min_mw: {value: 60, status: допущение, basis: "40 % номинала: технический минимум определяется котлом (ТПУ, стр. 7); для газовых котлов диапазон шире, чем у пылеугольного блока 200 МВт (25 %, leg_200mw); числа для МАЭК нет"}
+    ramp_mw_h: {value: 45, status: допущение, basis: "0,5 %/мин = 30 %/ч: порядок величины блока 200 МВт (0,25–0,65 %/мин, leg_200mw); требование до 5 %/мин (ТПУ) — для регулирующих блоков"}
+    start_h: {value: 2, status: допущение, basis: "пуск из горячего состояния 1…2 ч (ТПУ, стр. 17); в суточном графике — горячие пуски"}
+    min_up_h: {value: 8, status: допущение, basis: "работа на минимуме дольше 8…10 ч дороже останова и пуска (ТПУ, стр. 18) — обратная оценка; числа для МАЭК нет"}
+    min_down_h: {value: 6, status: допущение, basis: "простой до 6…10 ч — пуск из горячего состояния (ТПУ, стр. 17); короче 6 ч останов не выгоден"}
+    heat_rate_gj_mwh: {value: 10.6, status: допущение, basis: "КПД ≈ 34 % для газомазутных конденсационных блоков 1980-х; данных МАЭК нет"}
+    startup_gj: {value: 600, status: допущение, basis: "топливо на горячий пуск блока 150 МВт ≈ 1 ч работы на номинале; данных нет"}
+    slack: false
+    must_run: false
+
+  - id: MAEK-TES-2
+    copy_of: MAEK-TES-1
+    name: ТЭС МАЭК, блок 2
+
+  - id: MAEK-TES-3
+    copy_of: MAEK-TES-1
+    name: ТЭС МАЭК, блок 3
+
+  - id: MAEK-TEC2-1
+    name: ТЭЦ-2 МАЭК, группа 1
+    station: ТЭЦ-2
+    bus: {osm: way/224369643, kv: 220}
+    p_max_mw: {value: 155, status: допущение, basis: "располагаемая ТЭЦ-2 465 МВт (Википедия, источник) на 3 условные группы агрегатов; состав турбин не найден"}
+    p_min_mw: {value: 62, status: допущение, basis: "40 % — как у блоков ТЭС; у ТЭЦ минимум ещё задаётся отпуском тепла"}
+    ramp_mw_h: {value: 46, status: допущение, basis: "30 %/ч — как у блоков ТЭС"}
+    start_h: {value: 2, status: допущение, basis: "как у блоков ТЭС (ТПУ, стр. 17)"}
+    min_up_h: {value: 8, status: допущение, basis: "как у блоков ТЭС"}
+    min_down_h: {value: 6, status: допущение, basis: "как у блоков ТЭС"}
+    heat_rate_gj_mwh: {value: 11.6, status: допущение, basis: "КПД ≈ 31 % по электроэнергии (ТЭЦ 1968–1985 г., часть тепла отпускается); данных нет"}
+    startup_gj: {value: 600, status: допущение, basis: "как у блоков ТЭС"}
+    slack: true
+    must_run: {value: true, status: допущение, basis: "ТЭЦ работает по тепловому графику (тепло и опреснение для Актау); в графике группа 1 всегда включена и балансирует сеть в расчёте режима"}
+
+  - id: MAEK-TEC2-2
+    copy_of: MAEK-TEC2-1
+    name: ТЭЦ-2 МАЭК, группа 2
+    slack: false
+    must_run: false
+
+  - id: MAEK-TEC2-3
+    copy_of: MAEK-TEC2-1
+    name: ТЭЦ-2 МАЭК, группа 3
+    slack: false
+    must_run: false
+
+  - id: MAEK-TEC1
+    name: ТЭЦ-1 МАЭК
+    station: ТЭЦ-1
+    bus: {osm: way/224369643, kv: 220}
+    p_max_mw: {value: 45, status: источник, source: "https://ru.wikipedia.org/wiki/Мангистауский_атомно-энергетический_комбинат", basis: "располагаемая мощность ТЭЦ-1 (Википедия, баланс 2014 г. — вторичный)"}
+    p_min_mw: {value: 23, status: допущение, basis: "50 %: назначение ТЭЦ-1 — теплоснабжение Актау, работа по тепловому графику; числа нет"}
+    ramp_mw_h: {value: 14, status: допущение, basis: "30 %/ч — как у блоков ТЭС"}
+    start_h: {value: 2, status: допущение, basis: "как у блоков ТЭС"}
+    min_up_h: {value: 8, status: допущение, basis: "как у блоков ТЭС"}
+    min_down_h: {value: 6, status: допущение, basis: "как у блоков ТЭС"}
+    heat_rate_gj_mwh: {value: 12.4, status: допущение, basis: "КПД ≈ 29 %, старейшее оборудование (1963); данных нет"}
+    startup_gj: {value: 180, status: допущение, basis: "пропорционально мощности"}
+    slack: false
+    must_run: {value: true, status: допущение, basis: "ТЭЦ работает по тепловому графику"}
+
+  - id: GPES-ZH-1
+    name: ГПЭС Жанаозен, агрегат 1
+    station: ГПЭС Жанаозен
+    scenario: "2026"
+    bus: {osm: way/226831318, kv: 110}
+    p_max_mw: {value: 20, status: источник, source: "https://energyland.info/news-show--electro-285299", basis: "6 агрегатов по 20 МВт (energyland_gas_2026, lada_gas_ready)"}
+    p_min_mw: {value: 2, status: источник, source: "https://wartsila.com/energy/solutions/engine-power-plants/wartsila-50sg-gas-engine", basis: "минимум 10 % на агрегат — Wärtsilä 50SG (wartsila_50sg; данные производителя, модель агрегата — вывод)"}
+    ramp_mw_h: {value: 20, status: источник, source: "https://wartsila.com/energy/solutions/engine-power-plants/wartsila-50sg-gas-engine", basis: "набор > 100 %/мин (wartsila_50sg) — в часовом графике без ограничения"}
+    start_h: {value: 0, status: источник, source: "https://wartsila.com/energy/solutions/engine-power-plants/wartsila-50sg-gas-engine", basis: "пуск до полной нагрузки < 5 мин (wartsila_50sg) — в пределах часа"}
+    min_up_h: {value: 1, status: допущение, basis: "ограничения производителя не найдены; шаг графика — 1 ч"}
+    min_down_h: {value: 1, status: допущение, basis: "останов 1 мин (wartsila_50sg); шаг графика — 1 ч"}
+    heat_rate_gj_mwh: {value: 7.8, status: допущение, basis: "КПД ≈ 46 % — типовой порядок для крупных газопоршневых агрегатов; данные станции не найдены"}
+    startup_gj: {value: 2, status: допущение, basis: "быстрый пуск, малый расход; данных нет"}
+    slack: false
+    must_run: false
+
+  - {id: GPES-ZH-2, copy_of: GPES-ZH-1, name: "ГПЭС Жанаозен, агрегат 2"}
+  - {id: GPES-ZH-3, copy_of: GPES-ZH-1, name: "ГПЭС Жанаозен, агрегат 3"}
+  - {id: GPES-ZH-4, copy_of: GPES-ZH-1, name: "ГПЭС Жанаозен, агрегат 4"}
+  - {id: GPES-ZH-5, copy_of: GPES-ZH-1, name: "ГПЭС Жанаозен, агрегат 5"}
+  - {id: GPES-ZH-6, copy_of: GPES-ZH-1, name: "ГПЭС Жанаозен, агрегат 6"}
+
+base_dispatch:
+  # загрузка p_mw для статических проверок (check_network_real.py); суточный график строит twin/dispatch.py
+  status: допущение
+  basis: "p_mw = средняя нагрузка модели × p_max / Σ p_max агрегатов состава 2023 г. (ГПЭС — 0); балансирует MAEK-TEC2-1; check_network_real масштабирует ту же долю под нагрузку режима"
