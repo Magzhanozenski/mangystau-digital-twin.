@@ -25,6 +25,7 @@
 | Реальная нагрузка | почасовых данных **нет**; годовое потребление и максимумы МРЭК — в `data/network_sources/load_facts.yaml`, оценки по ПС для `network_real.yaml` |
 | Трансформаторы 220/110 и 110/10 | в Python-ядре и `network_real.yaml` (П-схема, типовые параметры ГОСТ; РПН и реакторы — нет); JS-ядро — без трансформаторов |
 | Суточный график агрегатов (минимальная загрузка, пуск, скорость набора, мин. время работы/простоя) | `twin/dispatch.py`, MILP; параметры МАЭК — допущения |
+| Интервалы P10–P90 прогноза погоды на сутки | `twin/uncertainty.py`, калиброваны по ERA5 2023–2024, проверены на 2025 |
 | Динамика, релейная защита | **не моделируются** |
 
 ## Структура
@@ -36,7 +37,8 @@ data/           параметры сети: network.yaml (условная), ne
                 data/network_sources/ — таблицы OSM, факты из документов (documents.yaml), опознание ПС
 twin/           Python-ядро: network.py — загрузка данных, powerflow.py — расчёт режима, pp_model.py — модель в pandapower,
                 weather.py — погода Open-Meteo, osm.py — снимок OSM, substation_match.py — опознание ПС,
-                build_real.py — сборка network_real.yaml, dispatch.py — суточный график агрегатов
+                build_real.py — сборка network_real.yaml, dispatch.py — суточный график агрегатов,
+                uncertainty.py — интервалы P10–P90 прогноза погоды
 tests/          автотесты pytest
 core_js/        расчётное ядро (JavaScript): engine2.js — режим сети и оптимизация, day.js — сутки вперёд
 validation/     независимая проверка ядра (Node.js + Python/numpy/scipy) и сверка с pandapower
@@ -73,6 +75,7 @@ python validation/check_network_real.py   # сеть по открытым ис�
 python validation/compare_network.py      # условная сеть vs реальная → validation/compare_network_report.md
 python validation/check_load.py           # нагрузка: факты vs допущения → validation/check_load_report.md (нужен Node.js)
 python validation/check_dispatch.py       # суточный график: перебор, ограничения, режим по часам → check_dispatch_report.md
+python validation/check_uncertainty.py    # покрытие P10–P90 прогноза погоды на 2025 г. → check_uncertainty_report.md
 python -m twin.dispatch                   # графики на средние и пиковые сутки (2023 и 2026)
 python validation/make_map.py             # проверочная карта → validation/network_map.html
 python -m twin.build_real                 # пересобрать data/network_real.yaml из снимка OSM и документов
