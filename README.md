@@ -17,7 +17,7 @@
 | Расчёт режима (AC, Ньютон–Рафсон → демпфированный Ньютон → метод продолжения) | реализован, независимо проверен |
 | Острова с местной генерацией, АЧР | реализовано |
 | Предел передаваемой мощности (P–V), отделение от численной несходимости | реализовано, проверено |
-| DLR (упрощённый тепловой баланс IEEE 738) | реализовано |
+| DLR (упрощённый тепловой баланс IEEE 738) | реализовано в JS; в Python — `twin/dlr.py`: угол ветра по пролётам, ветер ERA5 приведён к станциям, проверка по таблицам ПУЭ |
 | Прогноз нагрузки (нейросеть vs линейная модель) | реализовано на **синтетической** истории |
 | N-1 по 24 часам (336 расчётов), превентивные меры, ограничения скорости набора | реализовано |
 | Схема сети Мангистау | **условная** (`network.yaml`): 8 узлов, 11 линий — для сверок; **по открытым источникам** (`network_real.yaml`): 2 острова 110 кВ по OSM, без Актау/Жетыбая/Жанаозена |
@@ -38,7 +38,7 @@ data/           параметры сети: network.yaml (условная), ne
 twin/           Python-ядро: network.py — загрузка данных, powerflow.py — расчёт режима, pp_model.py — модель в pandapower,
                 weather.py — погода Open-Meteo, osm.py — снимок OSM, substation_match.py — опознание ПС,
                 build_real.py — сборка network_real.yaml, dispatch.py — суточный график агрегатов,
-                uncertainty.py — интервалы P10–P90 прогноза погоды
+                uncertainty.py — интервалы P10–P90 прогноза погоды, dlr.py — DLR по IEEE 738
 tests/          автотесты pytest
 core_js/        расчётное ядро (JavaScript): engine2.js — режим сети и оптимизация, day.js — сутки вперёд
 validation/     независимая проверка ядра (Node.js + Python/numpy/scipy) и сверка с pandapower
@@ -76,6 +76,9 @@ python validation/compare_network.py      # условная сеть vs реа�
 python validation/check_load.py           # нагрузка: факты vs допущения → validation/check_load_report.md (нужен Node.js)
 python validation/check_dispatch.py       # суточный график: перебор, ограничения, режим по часам → check_dispatch_report.md
 python validation/check_uncertainty.py    # покрытие P10–P90 прогноза погоды на 2025 г. → check_uncertainty_report.md
+python validation/fit_wind_mapping.py     # поправка ветра ERA5 к станциям → data/weather/wind_mapping.csv
+python validation/check_dlr.py            # DLR: ПУЭ, сверка с JS, физика → check_dlr_report.md
+python validation/dlr_2025.py             # почасовой DLR линий за 2025 г. → dlr_2025_report.md
 python -m twin.dispatch                   # графики на средние и пиковые сутки (2023 и 2026)
 python validation/make_map.py             # проверочная карта → validation/network_map.html
 python -m twin.build_real                 # пересобрать data/network_real.yaml из снимка OSM и документов
