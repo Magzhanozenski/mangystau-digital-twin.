@@ -27,9 +27,32 @@ CONDUCTOR = "АС-185"      # ДОПУЩЕНИЕ: марка провода ВЛ
 CONDUCTOR_220 = "АС-300"  # ДОПУЩЕНИЕ: марка провода ВЛ 220 кВ в документах не найдена
 MAEK_V = 1.02             # ДОПУЩЕНИЕ: напряжение шин 220 кВ МАЭК, о.е.
 COS_PHI = 0.92            # ДОПУЩЕНИЕ: cos φ нагрузки для выбора мощности трансформаторов 110/10 (≈ tan φ 0,42 в model)
-CONDUCTOR_220_PARAMS = {"r_ohm_km": 0.098, "x_ohm_km": 0.429, "b_s_km": 2.64e-6, "i_rated_a": 690, "diameter_m": 0.024,
-                        "status": "допущение",
-                        "basis": "типовые значения для провода АС-300/39 на линии 220 кВ; требуют сверки со справочником"}
+DLR_FACTS = SRC / "dlr_facts.yaml"
+
+
+def real_conductors(base_conductors: dict) -> dict:
+    """Провода network_real: r, диаметр — ГОСТ 839-80, длительный ток — ПУЭ табл. 1.3.29 (источники, шаг 3.3);
+    x и b — типовые (допущение). Пометки по полям — в marks."""
+    d = yaml.safe_load(DLR_FACTS.read_text(encoding="utf-8"))
+    src = d["sources"]
+    gost = {f["object"]["name"].split("/")[0]: f for f in d["facts"] if f["object"]["type"] == "провод"}
+    pue = next(f for f in d["facts"] if f["object"]["name"] == "ПУЭ, табл. 1.3.29")["value"]
+    typical = {"АС-185": (0.413, 2.75e-6), "АС-300": (0.429, 2.64e-6)}
+    out = dict(base_conductors)
+    for name, (x, b) in typical.items():
+        g = gost[name]["value"]
+        i = next(v for k, v in pue.items() if k.split("/")[0] == name)
+        out[name] = {"r_ohm_km": g["r20_ohm_km"], "x_ohm_km": x, "b_s_km": b, "i_rated_a": i,
+                     "diameter_m": g["diameter_mm"] / 1000, "status": "допущение",
+                     "basis": "r и диаметр — ГОСТ 839-80, ток — ПУЭ табл. 1.3.29; x и b — типовые",
+                     "marks": {"r_ohm_km": {"status": "источник", "source": src["gost_839_t4"],
+                                            "basis": f"ГОСТ 839-80, табл. 4, {gost[name]['object']['name']}: при 20 °C"},
+                               "diameter_m": {"status": "источник", "source": src["gost_839_t4"], "basis": "ГОСТ 839-80, табл. 4"},
+                               "i_rated_a": {"status": "источник", "source": src["pue_13"],
+                                             "basis": "ПУЭ табл. 1.3.29 (вне помещений; +70 °C провод, +25 °C воздух)"},
+                               "x_ohm_km": {"status": "допущение", "basis": "типовое для одноцепной ВЛ; геометрия опор не найдена"},
+                               "b_s_km": {"status": "допущение", "basis": "типовое; геометрия опор не найдена"}}}
+    return out
 
 HEADER = """\
 # Модель сети 110–220 кВ Мангистауской области по ОТКРЫТЫМ ИСТОЧНИКАМ (шаги 2.2–2.4) — собрана скриптом twin/build_real.py.
@@ -590,7 +613,7 @@ def build(snapshot: Path | None = None) -> tuple[dict, dict]:
                      "basis": "суммарная нагрузка для scn.load: средняя = энергия/8760 (потребление МРЭК — источник; "
                               "прочая нагрузка Бейнеу и остаток МРЭК — допущение) × коэффициенты режимов (допущение), "
                               "см. data/network_sources/load_estimates.yaml"}},
-        "conductors": {**base["conductors"], CONDUCTOR_220: CONDUCTOR_220_PARAMS},
+        "conductors": real_conductors(base["conductors"]),
         "buses": buses, "lines": lines, "transformers": trafos, "generators": gens,
         "model": base["model"],
         "summary": summary,
