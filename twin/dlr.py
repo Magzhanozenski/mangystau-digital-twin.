@@ -138,3 +138,73 @@ def load_wind_mapping(path: Path = WIND_MAP) -> dict:
     import pandas as pd
     t = pd.read_csv(path)
     return {p: (g["era5"].to_numpy(), g["station"].to_numpy()) for p, g in t.groupby("point")}
+
+
+# ---------------- почасовой DLR линий network_real ----------------
+POINT_COORDS = None
+
+
+def _points() -> dict:
+    """Координаты точек погоды (data/weather_points.yaml)."""
+    global POINT_COORDS
+    if POINT_COORDS is None:
+        d = yaml.safe_load((ROOT / "data" / "weather_points.yaml").read_text(encoding="utf-8"))
+        POINT_COORDS = {p["id"]: (float(p["lat"]), float(p["lon"])) for p in d["points"]}
+    return POINT_COORDS
+
+
+def line_geometries(net_raw: dict) -> dict:
+    """Маршруты линий network_real (одна запись на линию, без дублей цепей): провод, азимуты пролётов, середина."""
+    import json
+    snap_path = sorted((ROOT / "data" / "osm").glob("power_*.json"))[-1]
+    ways = {e["id"]: e for e in json.loads(snap_path.read_text(encoding="utf-8"))["elements"]
+            if e.get("tags", {}).get("power") in ("line", "cable")}
+    out = {}
+    for l in net_raw["lines"]:
+        key = l["id"].rsplit("-", 1)[0]
+        if key in out:
+            continue
+        coords = [(g["lat"], g["lon"]) for w in l["osm_ways"].split(";") for g in ways[int(w)]["geometry"]]
+        az, ln = span_azimuths(coords)
+        mid = coords[len(coords) // 2]
+        out[key] = {"id": l["id"], "conductor": l["conductor"], "km": l["km"], "az": az, "span_km": ln, "mid": mid,
+                    "name": l["name"]}
+    return out
+
+
+def nearest_point(lat: float, lon: float) -> tuple[str, float]:
+    best = None
+    for k, (pl, po) in _points().items():
+        p1, p2, dl = math.radians(lat), math.radians(pl), math.radians(po - lon)
+        a = math.sin((p2 - p1) / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+        d = 2 * 6371.0088 * math.asin(math.sqrt(a))
+        if best is None or d < best[1]:
+            best = (k, d)
+    return best
+
+
+def line_series(net_raw: dict, year: int = 2025, correct_wind: bool = True, fixed_angle: float | None = None):
+    """Почасовые DLR и справочный ток ПУЭ по линиям за год по ERA5 (ветер — с поправкой к станциям).
+    fixed_angle — угол ветра к линии для всех пролётов (для сравнения с прототипом, 45°). Возвращает (DataFrame, info)."""
+    import pandas as pd
+    geo = line_geometries(net_raw)
+    wm = load_wind_mapping() if correct_wind else {}
+    cache, rows, info = {}, {}, {}
+    for key, g in geo.items():
+        pt, dist = nearest_point(*g["mid"])
+        if pt not in cache:
+            cache[pt] = pd.read_csv(ROOT / "data" / "weather" / "archive" / f"{pt}_{year}.csv", parse_dates=["time"])
+        w = cache[pt]
+        wind = map_wind(w["wind_ms"], *wm[pt]) if correct_wind else w["wind_ms"].to_numpy()
+        elev = float(w["grid_elevation"].iloc[0])
+        if fixed_angle is None:
+            i = line_rating(g["conductor"], g["az"], w["T_c"], wind, w["wind_dir_deg"], w["solar_wm2"], elev)
+        else:
+            i = ampacity(g["conductor"], w["T_c"], wind, fixed_angle, w["solar_wm2"], elevation_m=elev)
+        rows[key] = i
+        info[key] = {"point": pt, "dist_km": round(dist, 1), "conductor": g["conductor"], "km": g["km"],
+                     "spans": len(g["az"]), "name": g["name"]}
+    df = pd.DataFrame(rows)
+    df.insert(0, "time", next(iter(cache.values()))["time"])
+    temps = {pt: c["T_c"].to_numpy() for pt, c in cache.items()}
+    return df, info, temps
