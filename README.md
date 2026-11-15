@@ -23,7 +23,8 @@
 | Схема сети Мангистау | **условная** (`network.yaml`): 8 узлов, 11 линий — для сверок; **по открытым источникам** (`network_real.yaml`): 2 острова 110 кВ по OSM, без Актау/Жетыбая/Жанаозена |
 | Реальная погода (Open-Meteo: архив ERA5 2023–2025, прогноз) | загружается (`twin/weather.py`), сверена со станциями; **в расчёты ещё не подключена** |
 | Реальная нагрузка | почасовых данных **нет**; годовое потребление и максимумы МРЭК — в `data/network_sources/load_facts.yaml`, оценки по ПС для `network_real.yaml` |
-| Трансформаторы, динамика, релейная защита | **не моделируются** |
+| Трансформаторы 220/110 и 110/10 | в Python-ядре и `network_real.yaml` (П-схема, типовые параметры ГОСТ; РПН и реакторы — нет); JS-ядро — без трансформаторов |
+| Динамика, релейная защита | **не моделируются** |
 
 ## Структура
 
@@ -67,7 +68,7 @@ python validation/check.py
 python validation/check_pv.py
 python validation/compare_pandapower.py   # нужен pandapower
 python validation/check_weather.py        # погода: целостность и сверка со станциями NOAA ISD (нужен интернет при первом запуске)
-python validation/check_network_real.py   # сеть по открытым источникам: ядро vs pandapower
+python validation/check_network_real.py   # сеть по открытым источникам: ядро vs pandapower → check_network_real_report.md
 python validation/compare_network.py      # условная сеть vs реальная → validation/compare_network_report.md
 python validation/check_load.py           # нагрузка: факты vs допущения → validation/check_load_report.md (нужен Node.js)
 python validation/make_map.py             # проверочная карта → validation/network_map.html
