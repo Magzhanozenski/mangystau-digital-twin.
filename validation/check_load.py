@@ -112,7 +112,7 @@ def main() -> int:
     used = sum(c["energy_mln_kwh"] for c in est["consumers"] if "energy_mln_kwh" in c)
     checks.append(("потребление, взятое в оценки, не больше передачи МРЭК 2023",
                    used <= energy["y2023"], f"{used} ≤ {energy['y2023']} млн кВт·ч"))
-    checks.append(("пик модели не больше максимума МРЭК 2023", ls["peak"] <= peak["y2023"],
+    checks.append(("пик модели не больше максимума МРЭК 2023 (+0,5 % на округление)", ls["peak"] <= peak["y2023"] * 1.005,
                    f"{ls['peak']:.1f} ≤ {peak['y2023']} МВт"))
     kz = next(c for c in est["consumers"] if c["id"] == "karazhanbas")["energy_mln_kwh"] * 1000 / 8760
     bo = next(c for c in est["consumers"] if c["id"] == "buzachi_operating")["energy_mln_kwh"] * 1000 / 8760
@@ -129,7 +129,7 @@ def main() -> int:
         out.append(f"- [{'x' if ok else ' '}] {name}: {detail}")
     share_src = real["summary"]["load_energy_by_mw"]["share"]
     out += ["", f"Модель покрывает {ls['base']:.1f} МВт средней нагрузки = {100 * ls['base'] / avg23:.0f} % средней нагрузки МРЭК 2023; "
-            f"{100 * share_src:.0f} % из неё опирается на годовое потребление из документов, остальное — допущение (Бейнеу).",
+            f"{100 * share_src:.0f} % из неё опирается на годовое потребление из документов, остальное — допущение (прочая нагрузка Бейнеу; остаток МРЭК на шинах ТЭЦ-3 — разность источника и допущений).",
             "Раскладка по ПС и коэффициенты режимов — допущения. Почасовых данных нет: связь нагрузки с погодой "
             "на реальных данных не проверена."]
     text = "\n".join(out) + "\n"

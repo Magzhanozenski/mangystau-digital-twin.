@@ -1,7 +1,8 @@
-"""Сборка data/network_real.yaml из снимка OSM, таблиц опознания ПС и документов (шаг 2.2, пункт 5).
+"""Сборка data/network_real.yaml из снимка OSM, таблиц опознания ПС и документов (шаги 2.2–2.4).
 
-Решения пользователя: в расчёт идут только линии с тегом voltage=110000 (вариант A);
-220 кВ — только в инвентаризацию; питание от ПС 220/110 — эквивалентные источники (допущение).
+Решения пользователя: линии 110 кВ — только с тегом voltage=110000 (вариант A); с шага 2.4 в расчёт
+входят линии 220 кВ, АТ 220/110, типовые трансформаторы 110/10, МАЭК, эквивалент Атырау и эквивалентные
+нагрузки районов вне сети 110 кВ.
 
 Пометки: у элемента общий status (как требует load_network): «источник» — только если все его
 поля из источников, иначе «допущение». Подробно по полям — в marks: {поле: {status, source|basis}}.
@@ -22,17 +23,17 @@ SRC = ROOT / "data" / "network_sources"
 OUT = ROOT / "data" / "network_real.yaml"
 OSM_WAY = "https://www.openstreetmap.org/way/"
 
-CONDUCTOR = "АС-185"  # ДОПУЩЕНИЕ: марка провода ВЛ 110 кВ в документах не найдена
-EQ_COS_PHI = 0.92     # ДОПУЩЕНИЕ: пересчёт мощности АТ (МВА) в предел эквивалента (МВт)
-EQ_UNLIMITED_MW = 500  # ДОПУЩЕНИЕ: предел эквивалента, когда мощность АТ неизвестна
-EQ_V_PU = 1.0          # ДОПУЩЕНИЕ: напряжение на шине 110 кВ ПС 220/110
-EQ_Q_FACTOR = 0.6      # ДОПУЩЕНИЕ: пределы Q эквивалента = ±0,6·Pmax
-
-# Мощность АТ из документов (documents.yaml): osm-id ПС → (МВА, ключ источника, где)
-AT_MVA = {"way/279492273": (150, "kus_2019", "стр. PDF 4, 20")}
+CONDUCTOR = "АС-185"      # ДОПУЩЕНИЕ: марка провода ВЛ 110 кВ в документах не найдена
+CONDUCTOR_220 = "АС-300"  # ДОПУЩЕНИЕ: марка провода ВЛ 220 кВ в документах не найдена
+MAEK_PMAX = 960           # ИСТОЧНИК (вторичный): располагаемая ТЭЦ-1 45 + ТЭЦ-2 465 + ТЭС 450 МВт, Википедия
+MAEK_V = 1.02             # ДОПУЩЕНИЕ: напряжение шин 220 кВ МАЭК, о.е.
+COS_PHI = 0.92            # ДОПУЩЕНИЕ: cos φ нагрузки для выбора мощности трансформаторов 110/10 (≈ tan φ 0,42 в model)
+CONDUCTOR_220_PARAMS = {"r_ohm_km": 0.098, "x_ohm_km": 0.429, "b_s_km": 2.64e-6, "i_rated_a": 690, "diameter_m": 0.024,
+                        "status": "допущение",
+                        "basis": "типовые значения для провода АС-300/39 на линии 220 кВ; требуют сверки со справочником"}
 
 HEADER = """\
-# Модель сети 110 кВ Мангистауской области по ОТКРЫТЫМ ИСТОЧНИКАМ (шаг 2.2) — собрана скриптом twin/build_real.py.
+# Модель сети 110–220 кВ Мангистауской области по ОТКРЫТЫМ ИСТОЧНИКАМ (шаги 2.2–2.4) — собрана скриптом twin/build_real.py.
 # Не редактировать вручную: пересобрать командой  .venv\\Scripts\\python -m twin.build_real
 #
 # Лицензия данных OpenStreetMap: трассы, длины, цепи и положение ПС взяты из OpenStreetMap.
@@ -43,9 +44,10 @@ HEADER = """\
 #
 # Пометки: status у элемента — «источник» только если ВСЕ его поля из источников, иначе «допущение».
 #   Подробно по полям — в marks: {{поле: {{status, source | basis}}}}. Доли источников — в разделе summary.
-# В расчёт входят только линии с тегом voltage=110000 (решение пользователя, вариант A).
-#   Линии без тега напряжения — в разделе not_modelled, 220 кВ — в inventory_220kv (в расчёте не участвуют).
-# Питание от ПС 220/110 кВ — эквивалентные источники (допущение): сеть 220 кВ и АТ не моделируются (шаг 2.4).
+# В расчёт входят линии с тегом voltage=110000 (вариант A) и 220000; линии без тега — в not_modelled.
+# Трансформаторы: АТ 220/110 (мощность — источник, где найдена; параметры — типовые ГОСТ, допущение) и типовые
+#   110/10 на ПС с нагрузкой (допущение). МАЭК — балансирующий источник на шинах 220 кВ ТЭЦ-3; Атырау — эквивалент.
+# Районы вне сети 110 кВ (Актау, Жанаозен) — эквивалентные нагрузки на шинах 220 кВ ТЭЦ-3 и 110 кВ ПС «Узень».
 """
 
 
@@ -161,20 +163,109 @@ def graph_110(snap: dict, segs: list[dict], keep=tagged_110) -> tuple[list[dict]
 
 
 def bus_loads(est: dict) -> dict:
-    """Средняя нагрузка по ПС OSM из load_estimates.yaml: {osm: {"mw", "parts": [...], "sourced": bool}}."""
+    """Средняя нагрузка по шинам из load_estimates.yaml: {(osm, кВ): {"mw", "parts": [...], "sourced": bool}}."""
     out = {}
     for c in est["consumers"]:
         mw = c["energy_mln_kwh"] * 1000 / est["hours"] if "energy_mln_kwh" in c else c["avg_mw"]
         if abs(sum(a["frac"] for a in c["allocation"]) - 1) > 1e-3:
             raise ValueError(f"load_estimates: доли раскладки {c['id']} не дают 1")
         for a in c["allocation"]:
-            b = out.setdefault(a["osm"], {"mw": 0.0, "parts": [], "sourced": True})
+            b = out.setdefault((a["osm"], a.get("kv", 110)), {"mw": 0.0, "parts": [], "sourced": True})
             b["mw"] += mw * a["frac"]
             b["sourced"] &= c["status"] == "источник"
             b["parts"].append({"consumer": c["name"], "mw": round(mw * a["frac"], 3), "frac": a["frac"],
                                "energy_status": c["status"], "energy_source": c.get("source", ""),
                                "energy_basis": c.get("location", c.get("basis", "")), "allocation_basis": a["basis"]})
     return out
+
+
+def _name_mark(r: dict) -> dict:
+    if r.get("status") == "источник":
+        return {"status": "источник", "source": r["source"], "confidence": r["confidence"], "basis": r["basis"]}
+    return {"status": "допущение", "confidence": r.get("confidence", "не опознана"), "basis": r.get("basis", "нет строки опознания")}
+
+
+def _circuit_lines(prefix: str, a: int, b: int, e: dict, buses: list, conductor: str, kv: str) -> list:
+    """Линии по ребру графа: каждая цепь — отдельная линия; пометки по полям."""
+    ns = {c[0] for c in e["circ"]}
+    n = min(ns)
+    cst = "источник" if all(c[1] == "источник" for c in e["circ"]) and len(ns) == 1 else "допущение"
+    cbasis = "; ".join(sorted({c[2] for c in e["circ"]}))
+    if len(ns) > 1:
+        cbasis += f"; вдоль линии разное число цепей {sorted(ns)} — принято меньшее ({n})"
+    ways = ";".join(str(w) for w in e["ways"])
+    nm = f"{buses[a - 1]['short']} — {buses[b - 1]['short']}"
+    out = []
+    for c in range(1, n + 1):
+        out.append({
+            "id": f"{prefix}-{c}", "from": a, "to": b, "km": round(e["km"], 3), "conductor": conductor,
+            "name": nm + (f" (цепь {c})" if n > 1 else ""), "status": "допущение",
+            "basis": "длина и трасса — OSM (источник); марка провода — допущение",
+            "osm_ways": ways,
+            "marks": {
+                "km": {"status": "источник", "source": OSM_WAY + str(e["ways"][0]),
+                       "basis": f"сумма длин участков OSM по геометрии (гаверсинус): ways {ways}"},
+                "conductor": {"status": "допущение", "basis": f"марка провода ВЛ {kv} кВ в документах не найдена — "
+                              f"принята {conductor}"},
+                "circuits": {"status": cst, "value": n, "basis": cbasis,
+                             **({"source": OSM_WAY + str(e["ways"][0])} if cst == "источник" else {})},
+                **({"flags": {"status": "допущение", "basis": f"теги OSM: {e['flags']}"}} if e["flags"] else {}),
+            }})
+    return out
+
+
+def assign_loads(buses: list, trafos: list, loads: dict, est: dict, tdn: dict) -> float:
+    """Раскладка средней нагрузки по шинам. Нагрузка ПС из островов 110 кВ переносится на шину НН (10 кВ) за двумя
+    типовыми трансформаторами 110/10 (допущение); эквивалентные нагрузки (kv ≠ 110 у ПС островов) остаются на своей шине.
+    Возвращает сумму средней нагрузки, МВт."""
+    total = sum(v["mw"] for v in loads.values())
+    key = {(b["osm"], b["vn_kv"]): b for b in buses}
+    missing = sorted(k for k in loads if k not in key)
+    if missing:
+        raise ValueError(f"load_estimates: шины {missing} нет в модели")
+    peak = est["scenarios"]["peak"]["factor"]
+    sizes = sorted(int(k.split("-")[1].split("/")[0]) // 1000 for k in tdn["value"])
+    for k, ld in loads.items():
+        b = key[k]
+        energy_mark = {
+            "status": "источник" if ld["sourced"] else "допущение",
+            "source": "; ".join(sorted({x["energy_source"] for x in ld["parts"] if x["energy_source"]})),
+            "basis": "; ".join(f"{x['consumer']}: {x['mw']} МВт ({'годовое потребление ' + str(est['year']) + ', ' + x['energy_basis'] if x['energy_status'] == 'источник' else x['energy_basis']})" for x in ld["parts"])}
+        share_mark = {"status": "допущение", "basis": "доля = средняя нагрузка шины / сумма по модели; раскладка — "
+                      "допущение: " + "; ".join(x["allocation_basis"] for x in ld["parts"])}
+        target = b
+        if b["kind"] == "ПС":  # ПС острова 110 кВ: шина НН и два типовых трансформатора 110/10
+            s_peak = ld["mw"] * peak / COS_PHI
+            need = 0.7 * s_peak
+            sn = next((x for x in sizes if x >= need), None)
+            if sn is None:
+                raise ValueError(f"нет типового трансформатора для {b['name']}: нужно ≥ {need:.1f} МВА")
+            row = tdn["value"][f"ТДН-{sn * 1000}/110"]
+            lv_id = len(buses) + 1
+            target = {"id": lv_id, "name": f"{b['name']} — шины НН 10 кВ (условно)", "short": (b["short"] + " НН")[:18],
+                      "vn_kv": 10, "share": 0.0, "osm": b["osm"], "kind": "шины НН (условно)", "status": "допущение",
+                      "basis": "условная шина НН: класс 10 кВ принят для всех ПС (у части ПС 35/6 кВ) — допущение",
+                      "marks": {}}
+            buses.append(target)
+            b["marks"]["share"] = {"status": "допущение", "basis": f"нагрузка ПС перенесена на шину НН {lv_id}"}
+            for u in (1, 2):
+                trafos.append({"id": f"T-{b['id']}-{u}", "from": b["id"], "to": lv_id, "sn_mva": sn,
+                               "uk_pct": row["uk"], "pk_kw": row["pk_kw"], "p0_kw": row["p0_kw"], "i0_pct": row["i0_pct"],
+                               "name": f"Т-{u} 110/10 кВ {b['name']}", "status": "допущение",
+                               "basis": "типовой трансформатор (решение пользователя: число и мощность не найдены)",
+                               "marks": {"sn_mva": {"status": "допущение",
+                                                    "basis": f"2 трансформатора, каждый ≥ 0,7 × пиковой нагрузки ПС "
+                                                             f"({ld['mw']:.1f} МВт × {peak} / cos φ {COS_PHI} = {s_peak:.1f} МВА) → "
+                                                             f"ближайший типовой ТДН-{sn * 1000}/110"},
+                                         "params": {"status": "допущение",
+                                                    "basis": f"параметры ТДН-{sn * 1000}/110 по {tdn['location']} ({tdn['source']}); "
+                                                             "применение к ПС — допущение"},
+                                         "ratio": {"status": "допущение", "basis": "номинальный, РПН не моделируется"}}})
+        target["share"] = round(ld["mw"] / total, 6)
+        target["load_mw_avg"] = round(ld["mw"], 3)
+        target["marks"]["share"] = share_mark
+        target["marks"]["load_energy"] = energy_mark
+    return total
 
 
 def build(snapshot: Path | None = None) -> tuple[dict, dict]:
@@ -216,16 +307,13 @@ def build(snapshot: Path | None = None) -> tuple[dict, dict]:
     excluded = [{"island_km": round(isl_km[i], 1), "reason": "нет ПС 220/110 и генерации в данных OSM"
                  if not feeds.get(i) else f"несколько ПС 220/110: {feeds[i]}"} for i in isl_km if i not in modelled]
 
-    # шины
+    # шины 110 кВ островов (нагрузка раскладывается в конце, assign_loads)
     bus_id, buses = {}, []
     deg = Counter()
     for e in edges:
         deg[e["p"]] += 1
         deg[e["q"]] += 1
-    known = {p[1] for p in pts if p[0] == "s" and island_of[p] in modelled}
-    missing = sorted(set(loads) - known)
-    if missing:
-        raise ValueError(f"load_estimates: ПС {missing} нет в модели")
+    feed_ids = {x for v in feeds.values() for x in v}
     for p in pts:
         if island_of[p] not in modelled:
             continue
@@ -235,40 +323,21 @@ def build(snapshot: Path | None = None) -> tuple[dict, dict]:
             r = ident.get(p[1], {})
             nm = r.get("match_name") or f"ПС {p[1]}"
             s = sub[p[1]]
-            is_feed = p[1] in {x for v in feeds.values() for x in v}
-            ld = loads.get(p[1])
-            if is_feed:
-                share_mark = {"status": "допущение", "basis": "питающий узел: нагрузка 110 кВ не задаётся"}
-            elif ld:
-                share_mark = {"status": "допущение", "basis": "доля = средняя нагрузка ПС / сумма по модели; раскладка "
-                              "потребителей по ПС — допущение: " + "; ".join(x["allocation_basis"] for x in ld["parts"])}
-            else:
-                share_mark = {"status": "допущение", "basis": "потребители у этой ПС не найдены — нагрузка 0"}
-            name_mark = ({"status": "источник", "source": r["source"], "confidence": r["confidence"], "basis": r["basis"]}
-                         if r.get("status") == "источник" else
-                         {"status": "допущение", "confidence": r.get("confidence", "не опознана"),
-                          "basis": r.get("basis", "нет строки опознания")})
+            is_feed = p[1] in feed_ids
             buses.append({
-                "id": bid, "name": nm, "short": nm[:18],
-                "share": round(ld["mw"] / load_total, 6) if ld and not is_feed else 0.0,
-                **({"load_mw_avg": round(ld["mw"], 3)} if ld and not is_feed else {}),
-                "osm": p[1], "lat": float(s["lat"]), "lon": float(s["lon"]), "kind": "ПС 220/110 (питание)" if is_feed else "ПС",
-                "status": "допущение",
-                "basis": "положение — OSM (источник); доля нагрузки — допущение",
+                "id": bid, "name": nm + (" — шины 110 кВ" if is_feed else ""), "short": nm[:18], "vn_kv": 110,
+                "share": 0.0, "osm": p[1], "lat": float(s["lat"]), "lon": float(s["lon"]),
+                "kind": "ПС 220/110 — шины 110 кВ" if is_feed else "ПС", "status": "допущение",
+                "basis": "положение — OSM (источник); нагрузка — допущение",
                 "marks": {
                     "position": {"status": "источник", "source": f"https://www.openstreetmap.org/{p[1]}"},
-                    "name": name_mark,
-                    "share": share_mark,
-                    **({"load_energy": {
-                        "status": "источник" if ld["sourced"] else "допущение",
-                        "source": "; ".join(sorted({x["energy_source"] for x in ld["parts"] if x["energy_source"]})),
-                        "basis": "; ".join(f"{x['consumer']}: {x['mw']} МВт ({'годовое потребление ' + est['year'].__str__() + ', ' + x['energy_basis'] if x['energy_status'] == 'источник' else x['energy_basis']})" for x in ld["parts"])}}
-                       if ld and not is_feed else {}),
+                    "name": _name_mark(r),
+                    "share": {"status": "допущение", "basis": "нагрузка не задана"},
                 }})
         else:
             kind = "ответвление" if deg[p] >= 3 else "обрыв линии"
             buses.append({
-                "id": bid, "name": f"{kind} (узел OSM {p[1]})", "short": kind[:18], "share": 0.0,
+                "id": bid, "name": f"{kind} (узел OSM {p[1]})", "short": kind[:18], "vn_kv": 110, "share": 0.0,
                 "osm": f"node/{p[1]}", "kind": kind, "status": "допущение",
                 "basis": ("точка ответвления линии в OSM, ПС нет" if kind == "ответвление" else
                           "конец линии 110 кВ в OSM не доходит до ПС (ПС не нанесена или вне порога привязки 0,5 км)"),
@@ -277,63 +346,161 @@ def build(snapshot: Path | None = None) -> tuple[dict, dict]:
                     "share": {"status": "допущение", "basis": "нагрузка в узле без ПС не задаётся (0)"},
                 }})
 
-    # линии (каждая цепь — отдельная линия)
+    # линии 110 кВ (каждая цепь — отдельная линия)
     lines = []
     for k, e in enumerate(sorted((e for e in edges if island_of[e["p"]] in modelled), key=lambda e: -e["km"])):
-        a, b = bus_id[e["p"]], bus_id[e["q"]]
-        ns = {c[0] for c in e["circ"]}
-        n = min(ns)
-        cst = "источник" if all(c[1] == "источник" for c in e["circ"]) and len(ns) == 1 else "допущение"
-        cbasis = "; ".join(sorted({c[2] for c in e["circ"]}))
-        if len(ns) > 1:
-            cbasis += f"; вдоль линии разное число цепей {sorted(ns)} — принято меньшее ({n})"
-        ways = ";".join(str(w) for w in e["ways"])
-        nm = f"{buses[a - 1]['short']} — {buses[b - 1]['short']}"
-        for c in range(1, n + 1):
-            lines.append({
-                "id": f"R{k + 1:02d}-{c}", "from": a, "to": b, "km": round(e["km"], 3), "conductor": CONDUCTOR,
-                "name": nm + (f" (цепь {c})" if n > 1 else ""), "status": "допущение",
-                "basis": "длина и трасса — OSM (источник); марка провода — допущение",
-                "osm_ways": ways,
-                "marks": {
-                    "km": {"status": "источник", "source": OSM_WAY + str(e["ways"][0]),
-                           "basis": f"сумма длин участков OSM по геометрии (гаверсинус): ways {ways}"},
-                    "conductor": {"status": "допущение", "basis": f"марка провода ВЛ 110 кВ в документах не найдена — "
-                                  f"принята {CONDUCTOR}"},
-                    "circuits": {"status": cst, "value": n, "basis": cbasis,
-                                 **({"source": OSM_WAY + str(e["ways"][0])} if cst == "источник" else {})},
-                    **({"flags": {"status": "допущение", "basis": f"теги OSM: {e['flags']}"}} if e["flags"] else {}),
-                }})
+        lines += _circuit_lines(f"R{k + 1:02d}", bus_id[e["p"]], bus_id[e["q"]], e, buses, CONDUCTOR, "110")
 
-    # эквиваленты 220/110
-    gens = []
-    feed_list = sorted(((i, v[0]) for i, v in feeds.items() if i in modelled), key=lambda t: -isl_km[t[0]])
-    for j, (isl, sid) in enumerate(feed_list):
-        r = ident.get(sid, {})
-        at = AT_MVA.get(sid)
-        pmax = round(at[0] * EQ_COS_PHI, 1) if at else EQ_UNLIMITED_MW
-        pbasis = (f"АТ {at[0]} МВА (источник: {dsrc[at[1]]}, {at[2]}) × cos φ {EQ_COS_PHI} (допущение)" if at else
-                  f"мощность АТ не найдена — принят предел {EQ_UNLIMITED_MW} МВт (без ограничения)")
-        gens.append({
-            "id": f"EQ{j + 1}", "bus": bus_id[("s", sid)], "name": f"Эквивалент 220 кВ: {r.get('match_name') or sid}",
-            "slack": j == 0, "p_mw": None if j == 0 else 0.0, "p_max_mw": pmax,
-            "q_min_mvar": -round(EQ_Q_FACTOR * pmax, 1), "q_max_mvar": round(EQ_Q_FACTOR * pmax, 1),
-            "v_pu": EQ_V_PU, "ramp_mw_h": round(pmax, 1), "status": "допущение",
-            "basis": "питание из сети 220 кВ через АТ 220/110; сеть 220 кВ и АТ не моделируются (шаг 2.4)",
-            "marks": {
-                "location": {"status": r.get("status", "допущение"), "source": r.get("source", ""), "basis": r.get("basis", "")},
-                "p_max_mw": {"status": "допущение", "basis": pbasis},
-                "v_pu": {"status": "допущение", "basis": f"напряжение шины 110 кВ ПС 220/110 принято {EQ_V_PU} о.е."},
-                "q_limits": {"status": "допущение", "basis": f"±{EQ_Q_FACTOR}·Pmax"},
-                "slack": {"status": "допущение", "basis": "балансирующий — эквивалент самого большого острова" if j == 0
-                          else "в своём острове ядро делает его балансирующим автоматически"},
-            }})
+    # ---------------- уровень 220 кВ (шаг 2.4) ----------------
+    tf = yaml.safe_load((SRC / "transformer_facts.yaml").read_text(encoding="utf-8"))
+    tsrc = tf["sources"]
+    key_of = {}  # (osm, kv) → id шины
+    for b in buses:
+        if b["kind"] == "ПС 220/110 — шины 110 кВ":
+            key_of[(b["osm"], 110)] = b["id"]
+
+    def add_bus(osm, kv, name, kind, basis, marks, lat=None, lon=None):
+        bid = len(buses) + 1
+        buses.append({"id": bid, "name": name, "short": name[:18], "vn_kv": kv, "share": 0.0, "osm": osm,
+                      **({"lat": lat, "lon": lon} if lat is not None else {}), "kind": kind,
+                      "status": "допущение", "basis": basis, "marks": marks})
+        key_of[(osm, kv)] = bid
+        return bid
+
+    subs220 = ["way/224369643", "way/181270259", "way/279492273", "way/226831318"]
+    for osm in subs220:
+        r, s = ident.get(osm, {}), sub[osm]
+        add_bus(osm, 220, (r.get("match_name") or osm) + " — шины 220 кВ", "ПС/станция — шины 220 кВ",
+                "положение — OSM (источник)",
+                {"position": {"status": "источник", "source": f"https://www.openstreetmap.org/{osm}"},
+                 "name": _name_mark(r), "share": {"status": "допущение", "basis": "нагрузка не задана"}},
+                float(s["lat"]), float(s["lon"]))
+    s = sub["way/226831318"]
+    add_bus("way/226831318", 110, "ПС 220/110/10 кВ «Узень» — шины 110 кВ", "ПС 220/110 — шины 110 кВ",
+            "шины 110 кВ ПС «Узень»: сеть 110 кВ Жанаозена в модели не представлена (нет тега 110 кВ в OSM) — "
+            "на этой шине эквивалентная нагрузка",
+            {"position": {"status": "источник", "source": "https://www.openstreetmap.org/way/226831318"},
+             "name": _name_mark(ident.get("way/226831318", {})),
+             "share": {"status": "допущение", "basis": "нагрузка не задана"}}, float(s["lat"]), float(s["lon"]))
+    atyrau = add_bus("external/atyrau", 220, "Атырау 220 кВ (эквивалент за краем снимка OSM)", "внешняя сеть",
+                     "концы двух ВЛ 220 кВ от ПС «Бейнеу», уходящих за пределы снимка; по документам — Л-2135/2145 "
+                     "до ПС 220 кВ «Атырау» (mrek_tru_2021, стр. PDF 84)",
+                     {"position": {"status": "допущение", "basis": "оба конца объединены в один узел; положение условное"},
+                      "share": {"status": "допущение", "basis": "нагрузка не задаётся"}})
+
+    # линии 220 кВ из OSM
+    seg = {s_["way"]: s_ for s_ in segs}
+    k220 = 0
+    for r in _csv("osm_lines.csv"):
+        if r["kv"] != "220.0":
+            continue
+        ends = r["ends"].split(";")
+        if len(set(ends)) < 2 or any(e_ not in subs220 and e_ != "обрыв" for e_ in ends):
+            continue  # петли внутри ТЭЦ-3
+        a = key_of[(ends[0], 220)] if ends[0] != "обрыв" else atyrau
+        b = key_of[(ends[1], 220)] if ends[1] != "обрыв" else atyrau
+        ways = [int(w) for w in r["ways"].split(";")]
+        circ = [circuits_of({"circuits": seg[str(w)]["circuits"], "cables": seg[str(w)]["cables"]}) for w in ways]
+        k220 += 1
+        new_l = _circuit_lines(f"H{k220:02d}", a, b, {"km": float(r["km"]), "ways": ways, "circ": circ, "flags": ""},
+                               buses, CONDUCTOR_220, "220")
+        if "обрыв" in ends:
+            for l in new_l:
+                l["marks"]["km"] = {"status": "допущение", "source": OSM_WAY + str(ways[0]),
+                                    "basis": "длина участка до края снимка OSM; полная длина до ПС «Атырау» больше — "
+                                             "эквивалент Атырау стоит на этом конце"}
+        lines += new_l
+
+    # автотрансформаторы 220/110
+    trafos = []
+    at_types = {f["object"]["name"]: f for f in tf["facts"] if f["object"]["type"] == "тип"}
+
+    def at_params(type_name):
+        f = at_types[type_name]
+        v = f["value"]
+        return ({"uk_pct": v["uk_vn_sn"], "pk_kw": v["pk_kw"], "p0_kw": v["p0_kw"], "i0_pct": v["i0_pct"]},
+                f"типовые параметры {type_name}: {f['location']} ({f['source']}); паспорт аппарата не найден")
+
+    at_list = (
+        ("way/181270259", "Бейнеу", 2, 63,
+         {"status": "источник", "source": tsrc["energybase_beyneu"], "basis": "2×63 МВА — карточка ПС (агрегатор energybase, вторичный)"},
+         "АТДЦТН-63000/220/110"),
+        ("way/279492273", "Каражанбас", 1, 150,
+         {"status": "источник", "source": tsrc["kus_2019"], "basis": "1×150 МВА — отчёт ККС 2019, стр. PDF 4, 20"},
+         "АТДЦТН-125000/220/110"),
+        ("way/226831318", "Узень", 2, 125,
+         {"status": "допущение", "basis": "два АТ (АТ-1, АТ-2 — mrek_2021, стр. PDF 42), мощность не найдена — "
+                                          "принят распространённый тип 125 МВА"},
+         "АТДЦТН-125000/220/110"),
+    )
+    for osm, short, n, sn, sn_mark, ptype in at_list:
+        prm, pbasis = at_params(ptype)
+        if sn != int(ptype.split("-")[1].split("/")[0]) // 1000:
+            pbasis += f"; применены к АТ {sn} МВА (такого типа в таблице ГОСТ нет)"
+        nm = ident.get(osm, {}).get("match_name", osm)
+        for u in range(1, n + 1):
+            trafos.append({"id": f"AT-{short}-{u}", "from": key_of[(osm, 220)], "to": key_of[(osm, 110)],
+                           "sn_mva": sn, **prm, "name": f"АТ-{u} 220/110 кВ {nm}", "status": "допущение",
+                           "basis": "мощность — см. marks.sn_mva; параметры — типовые по ГОСТ 17544-85 (допущение)",
+                           "marks": {"sn_mva": sn_mark,
+                                     "params": {"status": "допущение", "basis": pbasis},
+                                     "ratio": {"status": "допущение",
+                                               "basis": "коэффициент 220/110 номинальный, РПН не моделируется"}}})
+
+    # генерация
+    wiki = "https://ru.wikipedia.org/wiki/Мангистауский_атомно-энергетический_комбинат"
+    gens = [
+        {"id": "MAEK", "bus": key_of[("way/224369643", 220)],
+         "name": "МАЭК (ТЭЦ-1, ТЭЦ-2, ТЭС) — эквивалент на шинах 220 кВ ТЭЦ-3",
+         "slack": True, "p_mw": None, "p_max_mw": MAEK_PMAX, "q_min_mvar": -400, "q_max_mvar": 500,
+         "v_pu": MAEK_V, "ramp_mw_h": 120, "status": "допущение",
+         "basis": "все станции МАЭК сведены в один источник на шинах 220 кВ ТЭЦ-3",
+         "marks": {"p_max_mw": {"status": "источник", "source": wiki,
+                                "basis": "располагаемая мощность ТЭЦ-1 45 + ТЭЦ-2 465 + ТЭС 450 МВт "
+                                         "(Википедия, баланс 2014 г. — вторичный)"},
+                   "location": {"status": "допущение", "basis": "точка подключения всех станций — шины 220 кВ ТЭЦ-3"},
+                   "v_pu": {"status": "допущение", "basis": f"напряжение шин 220 кВ МАЭК {MAEK_V} о.е."},
+                   "q_limits": {"status": "допущение", "basis": "−400…+500 Мвар"},
+                   "slack": {"status": "допущение", "basis": "МАЭК — основной источник энергоузла, балансирующий"}}},
+        {"id": "ATYRAU", "bus": atyrau, "name": "Атырауский энергоузел — эквивалент по ВЛ 220 кВ",
+         "slack": False, "p_mw": 0.0, "p_max_mw": 80, "q_min_mvar": -100, "q_max_mvar": 100,
+         "v_pu": 1.0, "ramp_mw_h": 80, "status": "допущение",
+         "basis": "решение пользователя: эквивалент с P = 0, держит напряжение; переток — отдельным сценарием",
+         "marks": {"p_max_mw": {"status": "допущение",
+                                "basis": "переток по слабой связи ~80 МВт (dknews.kz, 14.11.2025, дата измерения не указана)"},
+                   "location": {"status": "допущение", "basis": "конец ВЛ 220 кВ у края снимка OSM"},
+                   "v_pu": {"status": "допущение", "basis": "1,0 о.е."},
+                   "q_limits": {"status": "допущение", "basis": "±100 Мвар"},
+                   "slack": {"status": "допущение", "basis": "PV-узел, P = 0"}}},
+    ]
+
+    # нагрузка по шинам и типовые трансформаторы 110/10 на ПС с нагрузкой
+    tdn = next(f for f in tf["facts"] if f["object"]["name"].startswith("ТДН-"))
+    load_total = assign_loads(buses, trafos, loads, est, tdn)
+
+    # острова (по линиям и трансформаторам)
+    par2 = {b["id"]: b["id"] for b in buses}
+
+    def f2(x):
+        while par2[x] != x:
+            par2[x] = par2[par2[x]]
+            x = par2[x]
+        return x
+    for br_ in lines + trafos:
+        par2[f2(br_["from"])] = f2(br_["to"])
+    comp = defaultdict(list)
+    for b in buses:
+        comp[f2(b["id"])].append(b["id"])
+    islands_out = []
+    for ids_ in comp.values():
+        islands_out.append({"buses": len(ids_), "generators": [g["id"] for g in gens if g["bus"] in ids_],
+                            "km": round(sum(l["km"] for l in lines if l["from"] in ids_ and l["id"].endswith("-1")), 1)})
 
     # инвентаризация 220 кВ (в расчёте не участвует)
     lines220 = [{"route": r["route"], "km": float(r["km"]), "ways": r["ways"], "ends": r["ends"],
                  "status": "источник", "source": OSM_WAY + r["ways"].split(";")[0], "basis": "трасса и длина — OSM"}
                 for r in _csv("osm_lines.csv") if r["kv"] == "220.0"]
-    subs220 = [{"osm": s["osm"], "name": ident[s["osm"]]["match_name"], "voltage_tag": s["voltage_tag"],
+    subs220_inv = [{"osm": s["osm"], "name": ident[s["osm"]]["match_name"], "voltage_tag": s["voltage_tag"],
                 "confidence": ident[s["osm"]]["confidence"], "status": ident[s["osm"]]["status"],
                 "basis": ident[s["osm"]]["basis"], "source": ident[s["osm"]]["source"]}
                for s in subs if "220000" in s["voltage_tag"] or s["osm"] == "way/224369643"]
@@ -354,6 +521,9 @@ def build(snapshot: Path | None = None) -> tuple[dict, dict]:
         "conductors_by_km": share_of(lines, "conductor", lambda l: l["km"]),
         "conductors_by_count": share_of(lines, "conductor"),
         "circuits_by_km": share_of(lines, "circuits", lambda l: l["km"]),
+        "lengths_220_km": share_of([l for l in lines if l["id"].startswith("H")], "km", lambda l: l["km"]),
+        "transformer_ratings_by_mva": share_of(trafos, "sn_mva", lambda t: t["sn_mva"]),
+        "transformer_params_by_count": share_of(trafos, "params"),
         "loads_by_bus": share_of([b for b in buses if b["share"] > 0], "share"),
         "load_energy_by_mw": share_of([b for b in buses if b["share"] > 0], "load_energy", lambda b: b["load_mw_avg"]),
         "generation_by_mw": share_of(gens, "p_max_mw", lambda g: g["p_max_mw"]),
@@ -362,7 +532,8 @@ def build(snapshot: Path | None = None) -> tuple[dict, dict]:
             "sources": sum(1 for b in buses if b.get("marks", {}).get("name", {}).get("status") == "источник"),
             "total": sum(1 for b in buses if "name" in b.get("marks", {}))},
         "note": ("доли — по полям marks. loads_by_bus — раскладка по ПС (всегда допущение); load_energy_by_mw — доля "
-                 "средней нагрузки, опирающейся на годовое потребление из документов; генерация — эквиваленты (допущение)"),
+                 "средней нагрузки, опирающейся на годовое потребление из документов; generation_by_mw — Pmax МАЭК "
+                 "(Википедия, вторичный) и эквивалента Атырау (допущение)"),
     }
 
     osm_base = snap.get("osm3s", {}).get("timestamp_osm_base", "?")
@@ -371,7 +542,7 @@ def build(snapshot: Path | None = None) -> tuple[dict, dict]:
                  "built": date.today().isoformat(), "builder": "twin/build_real.py",
                  "osm_snapshot": snap_path.name, "osm_base_timestamp": osm_base,
                  "license": "ODbL 1.0 (© участники OpenStreetMap)",
-                 "scope": "только линии с тегом voltage=110000 (вариант A)",
+                 "scope": "линии с тегом voltage=110000 (вариант A) и 220000; трансформаторы 220/110 и 110/10 (шаг 2.4)",
                  "load_scenarios": {
                      "year": est["year"], "avg_total_mw": round(load_total, 3),
                      **{k: round(load_total * v["factor"], 3) for k, v in est["scenarios"].items()},
@@ -379,16 +550,14 @@ def build(snapshot: Path | None = None) -> tuple[dict, dict]:
                                                        else c["avg_mw"] for c in est["consumers"] if c["island"] == k), 3)
                                           for k in sorted({c["island"] for c in est["consumers"]})},
                      "status": "допущение",
-                     "basis": "суммарная нагрузка для scn.load: средняя = энергия/8760 (потребление — источник, "
-                              "прочая нагрузка Бейнеу — допущение) × коэффициенты режимов (допущение), "
+                     "basis": "суммарная нагрузка для scn.load: средняя = энергия/8760 (потребление МРЭК — источник; "
+                              "прочая нагрузка Бейнеу и остаток МРЭК — допущение) × коэффициенты режимов (допущение), "
                               "см. data/network_sources/load_estimates.yaml"}},
-        "conductors": base["conductors"],
-        "buses": buses, "lines": lines, "generators": gens,
+        "conductors": {**base["conductors"], CONDUCTOR_220: CONDUCTOR_220_PARAMS},
+        "buses": buses, "lines": lines, "transformers": trafos, "generators": gens,
         "model": base["model"],
         "summary": summary,
-        "islands": [{"feed": sid, "feed_name": ident[sid]["match_name"], "km": round(isl_km[i], 1),
-                     "buses": sum(1 for p in pts if island_of[p] == i), "slack": gens[j]["id"]}
-                    for j, (i, sid) in enumerate(feed_list)],
+        "islands": islands_out,
         "not_modelled": {
             "unknown_voltage": {"segments": len(unk), "km": round(sum(float(s["km"]) for s in unk), 1),
                                 "basis": "в OSM нет тега voltage; по решению пользователя (вариант A) в расчёт не входят. "
@@ -399,7 +568,8 @@ def build(snapshot: Path | None = None) -> tuple[dict, dict]:
             "mrek_110kv_total_km": {"value": 1526.01, "status": "источник",
                                     "source": dsrc["mrek_2024"], "basis": "стр. PDF 4, «Компания в цифрах», 2024 г."},
         },
-        "inventory_220kv": {"note": "в расчёте не участвует (шаг 2.4)", "substations": subs220,
+        "inventory_220kv": {"note": "с шага 2.4 линии 220 кВ из OSM входят в расчёт (lines H*); здесь — справка",
+                            "substations": subs220_inv,
                             "lines_osm": lines220, "facts_from_documents": [
                                 {k: f[k] for k in ("object", "field", "value", "unit", "source", "location")} for f in doc220]},
     }
@@ -416,7 +586,8 @@ def write(path: Path = OUT) -> dict:
 
 if __name__ == "__main__":
     d = write()
-    print("шин", len(d["buses"]), "линий (цепей)", len(d["lines"]), "эквивалентов", len(d["generators"]))
+    print("шин", len(d["buses"]), "линий (цепей)", len(d["lines"]), "трансформаторов", len(d["transformers"]),
+          "генераторов", len(d["generators"]))
     print(json.dumps(d["islands"], ensure_ascii=False))
     print(json.dumps(d["summary"], ensure_ascii=False, indent=1))
-    print(json.dumps(d["not_modelled"]["islands_without_feed"], ensure_ascii=False))
+    print(json.dumps(d["meta"]["load_scenarios"], ensure_ascii=False))

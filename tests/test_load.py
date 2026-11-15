@@ -41,7 +41,7 @@ def test_estimates_marked_and_allocated():
         if c["status"] == "источник":
             assert c["source"].startswith("http") and "energy_mln_kwh" in c
         else:
-            assert c.get("basis") and "avg_mw" in c
+            assert c.get("basis") and ("avg_mw" in c or "energy_mln_kwh" in c)
         assert sum(a["frac"] for a in c["allocation"]) == pytest.approx(1, abs=1e-3)
         assert all(a["status"] == "допущение" and a["basis"] for a in c["allocation"])
     for s in e["scenarios"].values():

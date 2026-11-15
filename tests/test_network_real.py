@@ -92,14 +92,30 @@ def test_marks_and_sources(real):
                 assert all(m["status"] == "источник" for m in item["marks"].values())
 
 
-def test_only_tagged_110_and_no_220_in_model(real):
+def test_only_tagged_lines_and_voltage_levels(real):
+    """Линии — только с тегом напряжения (110 или 220 кВ), и класс линии совпадает с классом её шин (шаг 2.4)."""
     d, _ = real
     seg = {s["way"]: s for s in br._csv("osm_segments.csv")}
+    kv = {b["id"]: b["vn_kv"] for b in d["buses"]}
     for l in d["lines"]:
         for w in l["osm_ways"].split(";"):
-            assert seg[w]["kv"] == "110.0" and seg[w]["kv_basis"] == "тег voltage", (l["id"], w)
+            assert seg[w]["kv_basis"] == "тег voltage", (l["id"], w)
+            assert float(seg[w]["kv"]) == kv[l["from"]] == kv[l["to"]], (l["id"], w)
     assert d["meta"]["base_kv"] == 110
-    assert d["inventory_220kv"]["lines_osm"]  # 220 кВ собраны, но в lines не попали
+    assert {220, 110, 10} <= set(kv.values())
+
+
+def test_transformers_marked(real):
+    d, _ = real
+    kv = {b["id"]: b["vn_kv"] for b in d["buses"]}
+    assert d["transformers"]
+    for t in d["transformers"]:
+        assert kv[t["from"]] > kv[t["to"]]
+        for field in ("sn_mva", "params", "ratio"):
+            m = t["marks"][field]
+            assert m["status"] in ("источник", "допущение") and (m.get("source") or m.get("basis"))
+    sns = {t["id"]: t["sn_mva"] for t in d["transformers"]}
+    assert sns["AT-Каражанбас-1"] == 150 and sns["AT-Бейнеу-1"] == 63  # мощности из источников
 
 
 def test_circuits_as_parallel_lines(real):
@@ -115,7 +131,7 @@ def test_shares_and_islands(real):
     d, _ = real
     assert sum(b["share"] for b in d["buses"]) == pytest.approx(1.0, abs=1e-5)
     assert sum(1 for g in d["generators"] if g["slack"]) == 1
-    assert len(d["islands"]) == len(d["generators"])
+    assert all(isl["generators"] for isl in d["islands"])  # у каждого острова есть источник
     for k in ("lengths_km", "conductors_by_km", "loads_by_bus", "generation_by_mw"):
         assert k in d["summary"]
 
@@ -142,8 +158,8 @@ def test_bus_loads_from_estimates():
         {"id": "b", "name": "B", "island": "X", "avg_mw": 4, "status": "допущение", "basis": "нет данных",
          "allocation": [{"osm": "way/2", "frac": 1.0, "basis": "b"}]}]}
     out = br.bus_loads(est)
-    assert out["way/1"]["mw"] == pytest.approx(5) and out["way/1"]["sourced"]
-    assert out["way/2"]["mw"] == pytest.approx(9) and not out["way/2"]["sourced"]
+    assert out[("way/1", 110)]["mw"] == pytest.approx(5) and out[("way/1", 110)]["sourced"]
+    assert out[("way/2", 110)]["mw"] == pytest.approx(9) and not out[("way/2", 110)]["sourced"]
     est["consumers"][1]["allocation"][0]["frac"] = 0.7
     with pytest.raises(ValueError):
         br.bus_loads(est)
