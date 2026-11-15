@@ -110,3 +110,31 @@ def line_rating(cond: str, az: np.ndarray, Ta, wind, wind_dir, solar, elevation_
     for a in uniq:
         out = np.minimum(out, ampacity(cond, Ta, wind, wind_angle(wind_dir, a), solar, elevation_m=elevation_m))
     return out
+
+
+# ---------------- поправка ветра ERA5 к станциям (квантильное сопоставление, решение пользователя) ----------------
+WIND_MAP = ROOT / "data" / "weather" / "wind_mapping.csv"
+WIND_STATIONS = {"aktau": "38111099999", "beyneu": "35927099999"}   # Актау WMO 38111, Бейнеу WMO 35927
+WIND_POOLED = {"zhanaozen": ("aktau", "beyneu")}  # ДОПУЩЕНИЕ: у Жанаозена станции нет — объединённая выборка двух станций
+PROBS = np.round(np.arange(0.01, 1.0, 0.01), 2)
+
+
+def fit_wind_mapping(era5: np.ndarray, station: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Пары квантилей (ERA5 → станция) по одинаковым часам."""
+    return np.quantile(era5, PROBS), np.quantile(station, PROBS)
+
+
+def map_wind(wind, q_era5: np.ndarray, q_station: np.ndarray) -> np.ndarray:
+    """Ветер ERA5 → «как на станции»: интерполяция между квантилями; за пределами — сдвиг на крайнюю разницу; не ниже 0."""
+    w = np.asarray(wind, dtype=float)
+    out = np.interp(w, q_era5, q_station)
+    lo, hi = w < q_era5[0], w > q_era5[-1]
+    out = np.where(lo, w + (q_station[0] - q_era5[0]), out)
+    out = np.where(hi, w + (q_station[-1] - q_era5[-1]), out)
+    return np.maximum(out, 0.0)
+
+
+def load_wind_mapping(path: Path = WIND_MAP) -> dict:
+    import pandas as pd
+    t = pd.read_csv(path)
+    return {p: (g["era5"].to_numpy(), g["station"].to_numpy()) for p, g in t.groupby("point")}
