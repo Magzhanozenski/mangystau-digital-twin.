@@ -49,6 +49,8 @@ def dm_test(e1, e2, lag: int = 24) -> tuple[float, float]:
     dc = d - d.mean()
     g0 = np.dot(dc, dc) / n
     s = g0 + 2 * sum((1 - k / (lag + 1)) * np.dot(dc[k:], dc[:-k]) / n for k in range(1, lag + 1))
+    if s <= 0:  # ошибки совпадают — разницы нет
+        return 0.0, 1.0
     stat = d.mean() / math.sqrt(s / n)
     p = math.erfc(abs(stat) / math.sqrt(2))
     return float(stat), float(p)
