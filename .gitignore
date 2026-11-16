@@ -6,3 +6,4 @@ node_modules/
 .DS_Store
 data/weather/forecast/
 data/weather/stations/
+experiments/exp_b_data.csv
