@@ -42,6 +42,7 @@ twin/           Python-ядро: network.py — загрузка данных, p
 tests/          автотесты pytest
 core_js/        расчётное ядро (JavaScript): engine2.js — режим сети и оптимизация, day.js — сутки вперёд
 validation/     независимая проверка ядра (Node.js + Python/numpy/scipy) и сверка с pandapower
+experiments/    эксперименты для научной работы (этап 4): отчёты, рисунки, проверки
 web_prototype/  веб-прототип интерфейса (один HTML-файл, открывается в браузере)
 docs/           аудит, план работ, журнал решений
 ```
@@ -79,6 +80,9 @@ python validation/check_uncertainty.py    # покрытие P10–P90 прог�
 python validation/fit_wind_mapping.py     # поправка ветра ERA5 к станциям → data/weather/wind_mapping.csv
 python validation/check_dlr.py            # DLR: ПУЭ, сверка с JS, физика → check_dlr_report.md
 python validation/dlr_2025.py             # почасовой DLR линий за 2025 г. → dlr_2025_report.md
+python experiments/exp_a_ratings.py --stress 1.0 1.2 1.4 1.6   # эксперимент A → exp_a_results.json
+python experiments/check_exp_a.py         # проверка эксперимента A без интерполяции (~4 мин)
+python experiments/exp_a_report.py        # отчёт и рисунки эксперимента A
 python -m twin.dispatch                   # графики на средние и пиковые сутки (2023 и 2026)
 python validation/make_map.py             # проверочная карта → validation/network_map.html
 python -m twin.build_real                 # пересобрать data/network_real.yaml из снимка OSM и документов
